@@ -1,6 +1,10 @@
 # Build directory (contains everything)
 build/
 
+# SDK archives
+*.tar.gz
+*.zip
+
 # CloudXR SDK files (users provide their own)
 plugins/nvidia/lib/linux-x86_64/*
 !plugins/nvidia/lib/linux-x86_64/README.md
