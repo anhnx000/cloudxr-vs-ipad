@@ -1,0 +1,1069 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		016548CA2CD53782009F33B0 /* SessionConfigView+extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 016548C92CD53782009F33B0 /* SessionConfigView+extensions.swift */; };
+		01AFA4562BF7D8C5004B6F6B /* ViewerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA43A2BF7D8C5004B6F6B /* ViewerApp.swift */; };
+		01AFA4572BF7D8C5004B6F6B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA43B2BF7D8C5004B6F6B /* AppDelegate.swift */; };
+		01AFA45D2BF7D8C5004B6F6B /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA4412BF7D8C5004B6F6B /* SessionConfigView.swift */; };
+		01AFA4632BF7D8C5004B6F6B /* LaunchView+visionOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA4472BF7D8C5004B6F6B /* LaunchView+visionOS.swift */; };
+		01AFA4672BF7D8C5004B6F6B /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA44B2BF7D8C5004B6F6B /* Settings.bundle */; };
+		01AFA4692BF7D8C5004B6F6B /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA44D2BF7D8C5004B6F6B /* UIConstants.swift */; };
+		01AFA46A2BF7D8C5004B6F6B /* UIStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA44E2BF7D8C5004B6F6B /* UIStyles.swift */; };
+		01AFA4732BF7D954004B6F6B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA4712BF7D954004B6F6B /* Preview Assets.xcassets */; };
+		01C927EC2CB9BF64006D4D8D /* CloudXRKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01C927EB2CB9BF64006D4D8D /* CloudXRKit */; };
+		3C4885C12D36F05500108A07 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4885BF2D36F05300108A07 /* Utilities.swift */; };
+		3C4885C32D370D8100108A07 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4885BF2D36F05300108A07 /* Utilities.swift */; };
+		55629C972E99B4FE00B85E5B /* StreamingView+extensions+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55629C952E99B4FE00B85E5B /* StreamingView+extensions+iOS.swift */; };
+		55629C982E99B4FE00B85E5B /* StreamingView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55629C962E99B4FE00B85E5B /* StreamingView+iOS.swift */; };
+		55629C9B2E99B4FE00B85E5B /* ImmersiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55629C992E99B4FE00B85E5B /* ImmersiveView.swift */; };
+		55629C9C2E99B4FE00B85E5B /* WindowUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55629C9A2E99B4FE00B85E5B /* WindowUI.swift */; };
+		5573C23A2DA39E4900C7003B /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5573C2392DA39E4500C7003B /* AppModel.swift */; };
+		5573C23E2DA3BA6100C7003B /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5573C2392DA39E4500C7003B /* AppModel.swift */; };
+		5573C3912DA4B5A400C7003B /* LaunchView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5573C3902DA4B5A400C7003B /* LaunchView+iOS.swift */; };
+		5573C5362DA6DC6400C7003B /* ServerActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5573C5342DA6DC6000C7003B /* ServerActionsView.swift */; };
+		5573C5372DA70EFC00C7003B /* ServerActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5573C5342DA6DC6000C7003B /* ServerActionsView.swift */; };
+		8602F80E2E3845780038864F /* SessionConfigView+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8602F80D2E3845780038864F /* SessionConfigView+iOS.swift */; };
+		8602F8102E3845880038864F /* SessionConfigView+visionOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8602F80F2E3845880038864F /* SessionConfigView+visionOS.swift */; };
+		8650F4D72E6949F9009E755A /* MainContentView+visionOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8650F4D62E6949F9009E755A /* MainContentView+visionOS.swift */; };
+		868218DC2E2EF509005ED313 /* GuestMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868218DB2E2EF4FF005ED313 /* GuestMode.swift */; };
+		868218DD2E2EF509005ED313 /* GuestMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 868218DB2E2EF4FF005ED313 /* GuestMode.swift */; };
+		9C981CE92D30968500C3A953 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA43D2BF7D8C5004B6F6B /* Assets.xcassets */; };
+		9CAEE0C72D307CF90030E3F6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA43B2BF7D8C5004B6F6B /* AppDelegate.swift */; };
+		9CAEE0CC2D307CF90030E3F6 /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA44D2BF7D8C5004B6F6B /* UIConstants.swift */; };
+		9CAEE0D52D307CF90030E3F6 /* ViewerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA43A2BF7D8C5004B6F6B /* ViewerApp.swift */; };
+		9CAEE0D82D307CF90030E3F6 /* StarRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A725B02F2C6EC005000248FE /* StarRatingView.swift */; };
+		9CAEE0D92D307CF90030E3F6 /* SessionConfigView+extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 016548C92CD53782009F33B0 /* SessionConfigView+extensions.swift */; };
+		9CAEE0E62D307CF90030E3F6 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA4412BF7D8C5004B6F6B /* SessionConfigView.swift */; };
+		9CAEE0EB2D307CF90030E3F6 /* CloudXRKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9CAEE0BD2D307CF90030E3F6 /* CloudXRKit */; };
+		9CAEE0ED2D307CF90030E3F6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA4712BF7D954004B6F6B /* Preview Assets.xcassets */; };
+		9CAEE0EE2D307CF90030E3F6 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA44B2BF7D8C5004B6F6B /* Settings.bundle */; };
+		9CAEE0EF2D307CF90030E3F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA43D2BF7D8C5004B6F6B /* Assets.xcassets */; };
+		9CAEE0F82D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9CAEE0F72D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist */; };
+		9CC51E182D308742003A1CF0 /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC51E172D308742003A1CF0 /* Color+hex.swift */; };
+		9CC51E192D308742003A1CF0 /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC51E172D308742003A1CF0 /* Color+hex.swift */; };
+		A725B0302C6EC005000248FE /* StarRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A725B02F2C6EC005000248FE /* StarRatingView.swift */; };
+		BD00C8412D31D6CE006A341D /* UIStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AFA44E2BF7D8C5004B6F6B /* UIStyles.swift */; };
+		BD00C8452D31E34A006A341D /* UIStyles+visionOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD00C8442D31E33D006A341D /* UIStyles+visionOS.swift */; };
+		FB9895E82E00F1970041368D /* WindowStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB9895E72E00F1970041368D /* WindowStateManager.swift */; };
+		FB9895E92E00F1970041368D /* WindowStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB9895E72E00F1970041368D /* WindowStateManager.swift */; };
+		FBAAC52A2D2FC3E500F2117D /* TestHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAAC5292D2FC3E500F2117D /* TestHelper.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		01A8A66A2BD99BC500D84DBC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EAA206422B16737300B5867E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EAD044752B1E9D7D00EDCD8B;
+			remoteInfo = CloudXRViewer;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		016548C92CD53782009F33B0 /* SessionConfigView+extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SessionConfigView+extensions.swift"; sourceTree = "<group>"; };
+		01AFA43A2BF7D8C5004B6F6B /* ViewerApp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewerApp.swift; sourceTree = "<group>"; };
+		01AFA43B2BF7D8C5004B6F6B /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		01AFA43D2BF7D8C5004B6F6B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		01AFA4412BF7D8C5004B6F6B /* SessionConfigView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionConfigView.swift; sourceTree = "<group>"; };
+		01AFA4472BF7D8C5004B6F6B /* LaunchView+visionOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "LaunchView+visionOS.swift"; sourceTree = "<group>"; };
+		01AFA44B2BF7D8C5004B6F6B /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		01AFA44D2BF7D8C5004B6F6B /* UIConstants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UIConstants.swift; sourceTree = "<group>"; };
+		01AFA44E2BF7D8C5004B6F6B /* UIStyles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UIStyles.swift; sourceTree = "<group>"; };
+		01AFA4712BF7D954004B6F6B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		3C4885BF2D36F05300108A07 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
+		55629C952E99B4FE00B85E5B /* StreamingView+extensions+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StreamingView+extensions+iOS.swift"; sourceTree = "<group>"; };
+		55629C962E99B4FE00B85E5B /* StreamingView+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StreamingView+iOS.swift"; sourceTree = "<group>"; };
+		55629C992E99B4FE00B85E5B /* ImmersiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveView.swift; sourceTree = "<group>"; };
+		55629C9A2E99B4FE00B85E5B /* WindowUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowUI.swift; sourceTree = "<group>"; };
+		5573C2392DA39E4500C7003B /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		5573C3902DA4B5A400C7003B /* LaunchView+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LaunchView+iOS.swift"; sourceTree = "<group>"; };
+		5573C5342DA6DC6000C7003B /* ServerActionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerActionsView.swift; sourceTree = "<group>"; };
+		55D382202E99B922009D89EB /* CloudXRViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CloudXRViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		55D382212E99B922009D89EB /* CloudXRViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CloudXRViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		55D382222E99B922009D89EB /* CloudXRViewerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CloudXRViewerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8602F80D2E3845780038864F /* SessionConfigView+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SessionConfigView+iOS.swift"; sourceTree = "<group>"; };
+		8602F80F2E3845880038864F /* SessionConfigView+visionOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SessionConfigView+visionOS.swift"; sourceTree = "<group>"; };
+		8650F4D62E6949F9009E755A /* MainContentView+visionOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainContentView+visionOS.swift"; sourceTree = "<group>"; };
+		868218DB2E2EF4FF005ED313 /* GuestMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestMode.swift; sourceTree = "<group>"; };
+		869B09A32E5E222F001EACAD /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		9CAEE0F52D307CF90030E3F6 /* CloudXRViewer-iOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CloudXRViewer-iOS-Info.plist"; sourceTree = "<group>"; };
+		9CAEE0F72D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CloudXRViewer-visionOS-Info.plist"; sourceTree = "<group>"; };
+		9CC51E172D308742003A1CF0 /* Color+hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+hex.swift"; sourceTree = "<group>"; };
+		A725B02F2C6EC005000248FE /* StarRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarRatingView.swift; sourceTree = "<group>"; };
+		BD00C8442D31E33D006A341D /* UIStyles+visionOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIStyles+visionOS.swift"; sourceTree = "<group>"; };
+		DAB674CA2E1D5B73003DB343 /* CloudXRViewer-visionOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "CloudXRViewer-visionOS.entitlements"; sourceTree = "<group>"; };
+		FB9895E72E00F1970041368D /* WindowStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowStateManager.swift; sourceTree = "<group>"; };
+		FBAAC5292D2FC3E500F2117D /* TestHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestHelper.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		01A8A6632BD99BC500D84DBC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CAEE0EA2D307CF90030E3F6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CAEE0EB2D307CF90030E3F6 /* CloudXRKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EAD044732B1E9D7D00EDCD8B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01C927EC2CB9BF64006D4D8D /* CloudXRKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		01AFA4532BF7D8C5004B6F6B /* CloudXRViewer */ = {
+			isa = PBXGroup;
+			children = (
+				9CAEE0BB2D307A0F0030E3F6 /* Common */,
+				9CAEE0B92D3079BF0030E3F6 /* iOS */,
+				9CAEE0BA2D3079C60030E3F6 /* visionOS */,
+				01AFA43D2BF7D8C5004B6F6B /* Assets.xcassets */,
+				01AFA4722BF7D954004B6F6B /* Preview Content */,
+				01AFA44B2BF7D8C5004B6F6B /* Settings.bundle */,
+			);
+			path = CloudXRViewer;
+			sourceTree = "<group>";
+		};
+		01AFA4722BF7D954004B6F6B /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				01AFA4712BF7D954004B6F6B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		9CAEE0B92D3079BF0030E3F6 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				9CAEE0F52D307CF90030E3F6 /* CloudXRViewer-iOS-Info.plist */,
+				5573C3902DA4B5A400C7003B /* LaunchView+iOS.swift */,
+				8602F80D2E3845780038864F /* SessionConfigView+iOS.swift */,
+				55629C952E99B4FE00B85E5B /* StreamingView+extensions+iOS.swift */,
+				55629C962E99B4FE00B85E5B /* StreamingView+iOS.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		9CAEE0BA2D3079C60030E3F6 /* visionOS */ = {
+			isa = PBXGroup;
+			children = (
+				01AFA4472BF7D8C5004B6F6B /* LaunchView+visionOS.swift */,
+				8650F4D62E6949F9009E755A /* MainContentView+visionOS.swift */,
+				8602F80F2E3845880038864F /* SessionConfigView+visionOS.swift */,
+				BD00C8442D31E33D006A341D /* UIStyles+visionOS.swift */,
+				9CAEE0F72D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist */,
+				DAB674CA2E1D5B73003DB343 /* CloudXRViewer-visionOS.entitlements */,
+				55629C992E99B4FE00B85E5B /* ImmersiveView.swift */,
+				55629C9A2E99B4FE00B85E5B /* WindowUI.swift */,
+			);
+			path = visionOS;
+			sourceTree = "<group>";
+		};
+		9CAEE0BB2D307A0F0030E3F6 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				01AFA43B2BF7D8C5004B6F6B /* AppDelegate.swift */,
+				9CC51E172D308742003A1CF0 /* Color+hex.swift */,
+				5573C5342DA6DC6000C7003B /* ServerActionsView.swift */,
+				01AFA4412BF7D8C5004B6F6B /* SessionConfigView.swift */,
+				016548C92CD53782009F33B0 /* SessionConfigView+extensions.swift */,
+				868218DB2E2EF4FF005ED313 /* GuestMode.swift */,
+				A725B02F2C6EC005000248FE /* StarRatingView.swift */,
+				01AFA44D2BF7D8C5004B6F6B /* UIConstants.swift */,
+				3C4885BF2D36F05300108A07 /* Utilities.swift */,
+				01AFA44E2BF7D8C5004B6F6B /* UIStyles.swift */,
+				01AFA43A2BF7D8C5004B6F6B /* ViewerApp.swift */,
+				FBAAC5292D2FC3E500F2117D /* TestHelper.swift */,
+				5573C2392DA39E4500C7003B /* AppModel.swift */,
+				FB9895E72E00F1970041368D /* WindowStateManager.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		EAA206412B16737300B5867E = {
+			isa = PBXGroup;
+			children = (
+				01AFA4532BF7D8C5004B6F6B /* CloudXRViewer */,
+				869B09A32E5E222F001EACAD /* Config.xcconfig */,
+				55D382202E99B922009D89EB /* CloudXRViewer.app */,
+				55D382212E99B922009D89EB /* CloudXRViewer.app */,
+				55D382222E99B922009D89EB /* CloudXRViewerTests.xctest */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		01A8A6652BD99BC500D84DBC /* CloudXRViewerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 01A8A66C2BD99BC500D84DBC /* Build configuration list for PBXNativeTarget "CloudXRViewerTests" */;
+			buildPhases = (
+				01A8A6622BD99BC500D84DBC /* Sources */,
+				01A8A6632BD99BC500D84DBC /* Frameworks */,
+				01A8A6642BD99BC500D84DBC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				01A8A66B2BD99BC500D84DBC /* PBXTargetDependency */,
+			);
+			name = CloudXRViewerTests;
+			productName = CloudXRViewerTests;
+			productReference = 55D382222E99B922009D89EB /* CloudXRViewerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9CAEE0BC2D307CF90030E3F6 /* CloudXRViewer-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CAEE0F12D307CF90030E3F6 /* Build configuration list for PBXNativeTarget "CloudXRViewer-iOS" */;
+			buildPhases = (
+				9CAEE0BE2D307CF90030E3F6 /* Sources */,
+				9CAEE0EA2D307CF90030E3F6 /* Frameworks */,
+				9CAEE0EC2D307CF90030E3F6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CloudXRViewer-iOS";
+			packageProductDependencies = (
+				9CAEE0BD2D307CF90030E3F6 /* CloudXRKit */,
+			);
+			productName = CloudXRViewer;
+			productReference = 55D382212E99B922009D89EB /* CloudXRViewer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		EAD044752B1E9D7D00EDCD8B /* CloudXRViewer-visionOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EAD044812B1E9D7E00EDCD8B /* Build configuration list for PBXNativeTarget "CloudXRViewer-visionOS" */;
+			buildPhases = (
+				EAD044722B1E9D7D00EDCD8B /* Sources */,
+				EAD044732B1E9D7D00EDCD8B /* Frameworks */,
+				EAD044742B1E9D7D00EDCD8B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CloudXRViewer-visionOS";
+			packageProductDependencies = (
+				01C927EB2CB9BF64006D4D8D /* CloudXRKit */,
+			);
+			productName = CloudXRViewer;
+			productReference = 55D382202E99B922009D89EB /* CloudXRViewer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EAA206422B16737300B5867E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1530;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					01A8A6652BD99BC500D84DBC = {
+						CreatedOnToolsVersion = 15.3;
+						TestTargetID = EAD044752B1E9D7D00EDCD8B;
+					};
+					EAD044752B1E9D7D00EDCD8B = {
+						CreatedOnToolsVersion = 15.1;
+					};
+				};
+			};
+			buildConfigurationList = EAA206452B16737300B5867E /* Build configuration list for PBXProject "CloudXRViewer" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = EAA206412B16737300B5867E;
+			productRefGroup = EAA206412B16737300B5867E;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EAD044752B1E9D7D00EDCD8B /* CloudXRViewer-visionOS */,
+				9CAEE0BC2D307CF90030E3F6 /* CloudXRViewer-iOS */,
+				01A8A6652BD99BC500D84DBC /* CloudXRViewerTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		01A8A6642BD99BC500D84DBC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CAEE0EC2D307CF90030E3F6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CAEE0ED2D307CF90030E3F6 /* Preview Assets.xcassets in Resources */,
+				9CAEE0EE2D307CF90030E3F6 /* Settings.bundle in Resources */,
+				9CAEE0EF2D307CF90030E3F6 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EAD044742B1E9D7D00EDCD8B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01AFA4732BF7D954004B6F6B /* Preview Assets.xcassets in Resources */,
+				01AFA4672BF7D8C5004B6F6B /* Settings.bundle in Resources */,
+				9C981CE92D30968500C3A953 /* Assets.xcassets in Resources */,
+				9CAEE0F82D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		01A8A6622BD99BC500D84DBC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CAEE0BE2D307CF90030E3F6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5573C23E2DA3BA6100C7003B /* AppModel.swift in Sources */,
+				9CAEE0C72D307CF90030E3F6 /* AppDelegate.swift in Sources */,
+				9CC51E192D308742003A1CF0 /* Color+hex.swift in Sources */,
+				9CAEE0CC2D307CF90030E3F6 /* UIConstants.swift in Sources */,
+				868218DD2E2EF509005ED313 /* GuestMode.swift in Sources */,
+				BD00C8412D31D6CE006A341D /* UIStyles.swift in Sources */,
+				5573C3912DA4B5A400C7003B /* LaunchView+iOS.swift in Sources */,
+				3C4885C32D370D8100108A07 /* Utilities.swift in Sources */,
+				55629C972E99B4FE00B85E5B /* StreamingView+extensions+iOS.swift in Sources */,
+				55629C982E99B4FE00B85E5B /* StreamingView+iOS.swift in Sources */,
+				9CAEE0D52D307CF90030E3F6 /* ViewerApp.swift in Sources */,
+				FB9895E82E00F1970041368D /* WindowStateManager.swift in Sources */,
+				8602F80E2E3845780038864F /* SessionConfigView+iOS.swift in Sources */,
+				9CAEE0D82D307CF90030E3F6 /* StarRatingView.swift in Sources */,
+				9CAEE0D92D307CF90030E3F6 /* SessionConfigView+extensions.swift in Sources */,
+				5573C5372DA70EFC00C7003B /* ServerActionsView.swift in Sources */,
+				9CAEE0E62D307CF90030E3F6 /* SessionConfigView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EAD044722B1E9D7D00EDCD8B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CC51E182D308742003A1CF0 /* Color+hex.swift in Sources */,
+				55629C9B2E99B4FE00B85E5B /* ImmersiveView.swift in Sources */,
+				55629C9C2E99B4FE00B85E5B /* WindowUI.swift in Sources */,
+				5573C5362DA6DC6400C7003B /* ServerActionsView.swift in Sources */,
+				8650F4D72E6949F9009E755A /* MainContentView+visionOS.swift in Sources */,
+				01AFA4572BF7D8C5004B6F6B /* AppDelegate.swift in Sources */,
+				01AFA4632BF7D8C5004B6F6B /* LaunchView+visionOS.swift in Sources */,
+				01AFA4692BF7D8C5004B6F6B /* UIConstants.swift in Sources */,
+				FBAAC52A2D2FC3E500F2117D /* TestHelper.swift in Sources */,
+				5573C23A2DA39E4900C7003B /* AppModel.swift in Sources */,
+				868218DC2E2EF509005ED313 /* GuestMode.swift in Sources */,
+				01AFA4562BF7D8C5004B6F6B /* ViewerApp.swift in Sources */,
+				A725B0302C6EC005000248FE /* StarRatingView.swift in Sources */,
+				016548CA2CD53782009F33B0 /* SessionConfigView+extensions.swift in Sources */,
+				01AFA46A2BF7D8C5004B6F6B /* UIStyles.swift in Sources */,
+				3C4885C12D36F05500108A07 /* Utilities.swift in Sources */,
+				FB9895E92E00F1970041368D /* WindowStateManager.swift in Sources */,
+				BD00C8452D31E34A006A341D /* UIStyles+visionOS.swift in Sources */,
+				8602F8102E3845880038864F /* SessionConfigView+visionOS.swift in Sources */,
+				01AFA45D2BF7D8C5004B6F6B /* SessionConfigView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		01A8A66B2BD99BC500D84DBC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EAD044752B1E9D7D00EDCD8B /* CloudXRViewer-visionOS */;
+			targetProxy = 01A8A66A2BD99BC500D84DBC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		01A8A66D2BD99BC500D84DBC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 6KR3T733EC;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nvidia.ConfiguratorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CloudXRViewer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CloudXRViewer";
+				XROS_DEPLOYMENT_TARGET = 2.4;
+			};
+			name = Debug;
+		};
+		01A8A66E2BD99BC500D84DBC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 6KR3T733EC;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nvidia.ConfiguratorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CloudXRViewer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CloudXRViewer";
+				VALIDATE_PRODUCT = YES;
+				XROS_DEPLOYMENT_TARGET = 2.4;
+			};
+			name = Release;
+		};
+		9CAEE0F22D307CF90030E3F6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 869B09A32E5E222F001EACAD /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "CloudXRViewer-iOS";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_ASSET_PATHS = "\"CloudXRViewer/Preview Content\"";
+				DEVELOPMENT_TEAM = 6KR3T733EC;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "CloudXRViewer/iOS/CloudXRViewer-iOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "NVIDIA CloudXR Viewer";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Enables tracking the device position.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Enables connecting to a local server.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables sending audio data to a server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationLandscapeRight;
+				IOS_FILES = "*+iOS.*";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "$(OTHER_SWIFT_FLAGS)";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = CloudXRViewer;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				VISIONOS_FILES = "*+visionOS.*";
+			};
+			name = Debug;
+		};
+		9CAEE0F32D307CF90030E3F6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 869B09A32E5E222F001EACAD /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "CloudXRViewer-iOS";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_ASSET_PATHS = "\"CloudXRViewer/Preview Content\"";
+				DEVELOPMENT_TEAM = 6KR3T733EC;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "CloudXRViewer/iOS/CloudXRViewer-iOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "NVIDIA CloudXR Viewer";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Enables tracking the device position.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Enables connecting to a local server.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables sending audio data to a server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationLandscapeRight;
+				IOS_FILES = "*+iOS.*";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "$(OTHER_SWIFT_FLAGS)";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = CloudXRViewer;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				VALIDATE_PRODUCT = YES;
+				VISIONOS_FILES = "*+visionOS.*";
+			};
+			name = Release;
+		};
+		EAA206462B16737300B5867E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				EXCLUDED_ARCHS = x86_64;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SUPPORTED_PLATFORMS = "xrsimulator xros";
+				TARGETED_DEVICE_FAMILY = visionOS;
+				XROS_DEPLOYMENT_TARGET = 2.4;
+			};
+			name = Debug;
+		};
+		EAA206472B16737300B5867E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				EXCLUDED_ARCHS = x86_64;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SUPPORTED_PLATFORMS = "xrsimulator xros";
+				TARGETED_DEVICE_FAMILY = visionOS;
+				XROS_DEPLOYMENT_TARGET = 2.4;
+			};
+			name = Release;
+		};
+		EAD044822B1E9D7E00EDCD8B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 869B09A32E5E222F001EACAD /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "CloudXRViewer-visionOS";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = "CloudXRViewer/visionOS/CloudXRViewer-visionOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_ASSET_PATHS = "\"CloudXRViewer/Preview Content\"";
+				DEVELOPMENT_TEAM = 6KR3T733EC;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "CloudXRViewer/visionOS/CloudXRViewer-visionOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "NVIDIA CloudXR Viewer";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Enables connecting to a local server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				IOS_FILES = "*+iOS.*";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "$(OTHER_SWIFT_FLAGS)";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = CloudXRViewer;
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				VISIONOS_FILES = "*+visionOS.*";
+				XROS_DEPLOYMENT_TARGET = 2.4;
+			};
+			name = Debug;
+		};
+		EAD044832B1E9D7E00EDCD8B /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 869B09A32E5E222F001EACAD /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "CloudXRViewer-visionOS";
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = "CloudXRViewer/visionOS/CloudXRViewer-visionOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_ASSET_PATHS = "\"CloudXRViewer/Preview Content\"";
+				DEVELOPMENT_TEAM = 6KR3T733EC;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "CloudXRViewer/visionOS/CloudXRViewer-visionOS-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "NVIDIA CloudXR Viewer";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Enables connecting to a local server.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				IOS_FILES = "*+iOS.*";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = "$(MARKETING_VERSION)";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				"OTHER_SWIFT_FLAGS[arch=*]" = "$(OTHER_SWIFT_FLAGS)";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_NAME = CloudXRViewer;
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 7;
+				VALIDATE_PRODUCT = YES;
+				VISIONOS_FILES = "*+visionOS.*";
+				XROS_DEPLOYMENT_TARGET = 2.4;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		01A8A66C2BD99BC500D84DBC /* Build configuration list for PBXNativeTarget "CloudXRViewerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				01A8A66D2BD99BC500D84DBC /* Debug */,
+				01A8A66E2BD99BC500D84DBC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CAEE0F12D307CF90030E3F6 /* Build configuration list for PBXNativeTarget "CloudXRViewer-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CAEE0F22D307CF90030E3F6 /* Debug */,
+				9CAEE0F32D307CF90030E3F6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EAA206452B16737300B5867E /* Build configuration list for PBXProject "CloudXRViewer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EAA206462B16737300B5867E /* Debug */,
+				EAA206472B16737300B5867E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EAD044812B1E9D7E00EDCD8B /* Build configuration list for PBXNativeTarget "CloudXRViewer-visionOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EAD044822B1E9D7E00EDCD8B /* Debug */,
+				EAD044832B1E9D7E00EDCD8B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		01C927EB2CB9BF64006D4D8D /* CloudXRKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CloudXRKit;
+		};
+		9CAEE0BD2D307CF90030E3F6 /* CloudXRKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CloudXRKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = EAA206422B16737300B5867E /* Project object */;
+}

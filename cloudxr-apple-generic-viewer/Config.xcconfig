@@ -1,0 +1,11 @@
+//
+//  Config.xcconfig
+//  CloudXR Viewer
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+// Build configuration
+MARKETING_VERSION = 6.0.0
+PRODUCT_BUNDLE_IDENTIFIER = com.nvidia.cloudxr-viewer
