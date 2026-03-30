@@ -82,11 +82,15 @@ function lovr.load(args)
         print("Running in headset-independent mode for iPad workflow (CXR_REQUIRE_HEADSET != 1).")
     end
 
-    -- Opaque channel is retried independently from headset lifecycle.
-    if CloudXRManager.initOpaqueDataChannel() then
+    -- Opaque channel requires a valid OpenXR instance/headset path.
+    -- In iPad headset-independent mode we intentionally skip it and rely on
+    -- the fallback HTTP record control API.
+    if REQUIRE_HEADSET and CloudXRManager.initOpaqueDataChannel() then
         opaqueChannelInitialized = true
-    else
+    elseif REQUIRE_HEADSET then
         print("Opaque Data Channel not ready yet; will retry initialization.")
+    else
+        print("Opaque Data Channel disabled in headset-independent mode.")
     end
 
     if not cameraHookInitialized then
@@ -102,7 +106,7 @@ function lovr.load(args)
         end
     end
 
-    if opaqueChannelInitialized then
+    if opaqueChannelInitialized or not REQUIRE_HEADSET then
         appReadyLogged = true
         print("Application initialized successfully")
     end
@@ -195,7 +199,7 @@ function lovr.update(dt)
         end
     end
     
-    if not opaqueChannelInitialized and now >= nextOpaqueRetryAt then
+    if REQUIRE_HEADSET and not opaqueChannelInitialized and now >= nextOpaqueRetryAt then
         nextOpaqueRetryAt = now + OPAQUE_RETRY_INTERVAL_SEC
         if CloudXRManager.initOpaqueDataChannel() then
             opaqueChannelInitialized = true
@@ -228,7 +232,7 @@ function lovr.update(dt)
         AudioManager.update()
     end
 
-    if opaqueChannelInitialized and not appReadyLogged then
+    if (opaqueChannelInitialized or not REQUIRE_HEADSET) and not appReadyLogged then
         appReadyLogged = true
         print("Application initialized successfully")
     end

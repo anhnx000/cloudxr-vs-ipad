@@ -38,6 +38,8 @@ private struct RecordFallbackResponse: Decodable {
     let ok: Bool
     let status: String?
     let message: String?
+    let source: String?
+    let output: String?
 }
 
 struct ServerActionsView: View {
@@ -61,6 +63,14 @@ struct ServerActionsView: View {
     
     private var isCurrentChannelReady: Bool {
         currentChannel?.status == .ready
+    }
+
+    private var canUseFallbackRecordControl: Bool {
+        fallbackRecordBaseURL != nil
+    }
+
+    private var canControlRecording: Bool {
+        isCurrentChannelReady || canUseFallbackRecordControl
     }
 
     private var fallbackRecordBaseURL: URL? {
@@ -169,7 +179,11 @@ struct ServerActionsView: View {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 8
-        request.httpBody = Data("{}".utf8)
+        if command == .start {
+            request.httpBody = Data("{\"source\":\"ipad\"}".utf8)
+        } else {
+            request.httpBody = Data("{}".utf8)
+        }
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -186,7 +200,11 @@ struct ServerActionsView: View {
                     recordingState = .idle
                 }
                 pendingTimeoutTask?.cancel()
-                lastMessageReceived = decoded?.message ?? "Fallback record command succeeded."
+                if let output = decoded?.output, !output.isEmpty {
+                    lastMessageReceived = (decoded?.message ?? "Fallback record command succeeded.") + " -> \(output)"
+                } else {
+                    lastMessageReceived = decoded?.message ?? "Fallback record command succeeded."
+                }
             } else {
                 recordingState = .idle
                 let msg = decoded?.message ?? "HTTP \(http.statusCode)"
@@ -216,7 +234,11 @@ struct ServerActionsView: View {
         case .idle:
             Button(action: {
                 lastMessageReceived = "Đang gửi lệnh bắt đầu ghi hình..."
-                if sendMessage(message: "cmd:record_start") {
+                if canUseFallbackRecordControl {
+                    Task { @MainActor in
+                        await sendFallbackRecordCommand(.start)
+                    }
+                } else if sendMessage(message: "cmd:record_start") {
                     recordingState = .pending
                     startPendingTimeout()
                     lastMessageReceived = "Đã gửi lệnh bắt đầu ghi hình, chờ phản hồi từ server..."
@@ -234,6 +256,7 @@ struct ServerActionsView: View {
                     .background(Color.red)
                     .clipShape(Capsule())
             }
+            .disabled(!canControlRecording)
 
         case .pending:
             HStack(spacing: 8) {
@@ -251,7 +274,11 @@ struct ServerActionsView: View {
 
         case .recording:
             Button(action: {
-                if sendMessage(message: "cmd:record_stop") {
+                if canUseFallbackRecordControl {
+                    Task { @MainActor in
+                        await sendFallbackRecordCommand(.stop)
+                    }
+                } else if sendMessage(message: "cmd:record_stop") {
                     recordingState = .pending
                     startPendingTimeout()
                 } else {
@@ -268,7 +295,7 @@ struct ServerActionsView: View {
                     .background(Color(red: 0.2, green: 0.2, blue: 0.2))
                     .clipShape(Capsule())
             }
-            .disabled(!isCurrentChannelReady)
+            .disabled(!canControlRecording)
         }
     }
 

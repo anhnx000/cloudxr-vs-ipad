@@ -55,7 +55,7 @@ function Recorder.start(outputFile)
 
     os.execute("mkdir -p " .. recordingsDir())
     if not outputFile or outputFile == "" then
-        outputFile = recordingsDir() .. "/record_" .. os.date("%Y%m%d_%H%M%S") .. ".mp4"
+        outputFile = recordingsDir() .. "/ubuntu_lovr_record_" .. os.date("%Y%m%d_%H%M%S") .. ".mp4"
     end
 
     -- Create named pipe.

@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict
@@ -59,13 +60,33 @@ def _status_payload(extra_message: str | None = None) -> Dict[str, Any]:
     proc = _run_record_sh("status")
     output = (proc.stdout or "") + (proc.stderr or "")
     recording = "RECORDING" in output
+    output_path = ""
+    for line in output.splitlines():
+        if line.startswith("Output: "):
+            output_path = line.replace("Output: ", "", 1).strip()
+            break
+
+    source = "unknown"
+    if "ipad_airplay_record_" in output_path:
+        source = "ipad"
+    elif "ubuntu_lovr_record_" in output_path:
+        source = "ubuntu"
+
     payload: Dict[str, Any] = {
         "ok": proc.returncode == 0,
         "status": "recording" if recording else "idle",
+        "source": source,
+        "output": output_path,
         "message": extra_message or output.strip(),
         "raw": output.strip(),
     }
     return payload
+
+
+def _default_output_for_source(source: str) -> str:
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    name = "ipad_airplay_record" if source == "ipad" else "ubuntu_airplay_record"
+    return str(_repo_root() / "recordings" / f"{name}_{ts}.mp4")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -111,6 +132,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/record/start":
             body = self._parse_json_body()
             output = body.get("output") if isinstance(body.get("output"), str) else ""
+            source = body.get("source") if isinstance(body.get("source"), str) else ""
+            if not output:
+                output = _default_output_for_source(source)
             cmd = ["start"]
             if output:
                 cmd.append(output)
