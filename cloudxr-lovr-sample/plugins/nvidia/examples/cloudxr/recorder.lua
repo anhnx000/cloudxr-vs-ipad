@@ -52,6 +52,9 @@ end
 
 function Recorder.start(outputFile)
     if isRecording then return false, "already recording" end
+    if not lovr or not lovr.graphics or not lovr.graphics.newTexture then
+        return false, "graphics module is not initialized"
+    end
 
     os.execute("mkdir -p " .. recordingsDir())
     if not outputFile or outputFile == "" then

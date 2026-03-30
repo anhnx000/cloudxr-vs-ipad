@@ -17,6 +17,7 @@ set -euo pipefail
 RECORDINGS_DIR="$HOME/work/cloudxr-vs-ipad/recordings"
 PID_FILE="/tmp/uxplay_record.pid"
 OUTPUT_FILE="/tmp/uxplay_record_output.txt"
+STARTED_AT_FILE="/tmp/uxplay_record_started_at.txt"
 
 AIRPLAY_NAME="Linux-AirPlay-Record"
 AIRPLAY_PORT=7200
@@ -87,6 +88,7 @@ start_recording() {
     local pid=$!
     echo "$pid" > "$PID_FILE"
     echo "$output" > "$OUTPUT_FILE"
+    date +%s > "$STARTED_AT_FILE"
 
     echo ""
     echo "Recording started (PID: $pid)"
@@ -107,12 +109,20 @@ stop_recording() {
     kill "$pid" 2>/dev/null || true
     pkill -x uxplay 2>/dev/null || true
 
-    rm -f "$PID_FILE" "$OUTPUT_FILE"
+    rm -f "$PID_FILE" "$OUTPUT_FILE" "$STARTED_AT_FILE"
     sleep 1
 
     if [ -n "$output" ] && [ -f "$output" ]; then
-        size=$(du -sh "$output" | cut -f1)
-        echo "Saved: $output ($size)"
+        local bytes
+        bytes=$(stat -c%s "$output" 2>/dev/null || echo 0)
+        if [ "${bytes:-0}" -eq 0 ]; then
+            echo "Saved empty file: $output (0 bytes)"
+            echo "Warning: no AirPlay frames were received while recording."
+            echo "On iPad, open Control Center -> Screen Mirroring -> Linux-AirPlay-Record."
+        else
+            size=$(du -sh "$output" | cut -f1)
+            echo "Saved: $output ($size)"
+        fi
     else
         echo "Recording stopped."
         [ -n "$output" ] && echo "Expected output: $output"
@@ -126,9 +136,23 @@ status_recording() {
         output=$(cat "$OUTPUT_FILE" 2>/dev/null || echo "unknown")
         echo "RECORDING  (PID: $pid)"
         echo "Output: $output"
+        if [ -f "$output" ]; then
+            local bytes
+            bytes=$(stat -c%s "$output" 2>/dev/null || echo 0)
+            if [ "${bytes:-0}" -eq 0 ]; then
+                local now started elapsed
+                now=$(date +%s)
+                started=$(cat "$STARTED_AT_FILE" 2>/dev/null || echo "$now")
+                elapsed=$(( now - started ))
+                if [ "$elapsed" -ge 5 ]; then
+                    echo "Warning: still no video frames after ${elapsed}s."
+                    echo "Ensure iPad is mirroring to Linux-AirPlay-Record."
+                fi
+            fi
+        fi
     else
         echo "Not recording."
-        rm -f "$PID_FILE" "$OUTPUT_FILE" 2>/dev/null || true
+        rm -f "$PID_FILE" "$OUTPUT_FILE" "$STARTED_AT_FILE" 2>/dev/null || true
     fi
 
     echo ""
