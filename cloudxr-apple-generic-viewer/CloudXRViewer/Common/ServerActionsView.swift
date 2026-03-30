@@ -60,6 +60,10 @@ struct ServerActionsView: View {
     @State private var channelReaderTask: Task<Void, Never>?
     @State private var pendingTimeoutTask: Task<Void, Never>?
     @State private var receivedMessageCount: Int = 0
+#if os(iOS)
+    @State private var cameraStreamController = IPadCameraStreamController()
+    @State private var cameraStreamStatus: String = "Camera stream idle"
+#endif
     
     private var isCurrentChannelReady: Bool {
         currentChannel?.status == .ready
@@ -398,6 +402,51 @@ struct ServerActionsView: View {
                 }
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity)
+
+#if os(iOS)
+                Divider().padding(.vertical, 8)
+
+                VStack(spacing: 8) {
+                    Text("iPad Camera -> Server")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    HStack {
+                        Spacer()
+                        Button("Start Camera Stream") {
+                            guard !hostAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                                cameraStreamStatus = "Set Manual IP before starting camera stream."
+                                return
+                            }
+                            Task { @MainActor in
+                                do {
+                                    try await cameraStreamController.start(host: hostAddress, fps: 10)
+                                    cameraStreamStatus = "Streaming frames: \(cameraStreamController.frameCount)"
+                                } catch {
+                                    cameraStreamStatus = "Start failed: \(error.localizedDescription)"
+                                }
+                            }
+                        }
+                        .disabled(cameraStreamController.isStreaming)
+                        .buttonStyle(.borderedProminent)
+                        Spacer()
+                        Button("Stop Camera Stream") {
+                            Task { @MainActor in
+                                await cameraStreamController.stop()
+                                cameraStreamStatus = "Camera stream stopped. Uploaded frames: \(cameraStreamController.frameCount)"
+                            }
+                        }
+                        .disabled(!cameraStreamController.isStreaming)
+                        .buttonStyle(.borderedProminent)
+                        Spacer()
+                    }
+
+                    Text(cameraStreamStatus)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+#endif
 
                 Divider().padding(.vertical, 8)
 

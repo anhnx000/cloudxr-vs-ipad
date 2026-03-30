@@ -24,6 +24,33 @@ local cameraHookInitialized = false
 local appReadyLogged = false
 local nextOpaqueRetryAt = 0
 
+local function initGraphicsForHeadsetlessMode()
+    local graphicsSuccess, graphics = pcall(require, "lovr.graphics")
+    if not graphicsSuccess then
+        print("Failed to load graphics module in headset-independent mode:", graphics)
+        return false
+    end
+
+    lovr.graphics = graphics
+    pcall(function()
+        lovr.graphics.initialize()
+    end)
+
+    local systemSuccess, system = pcall(require, "lovr.system")
+    if systemSuccess then
+        lovr.system = system
+        local registry = debug.getregistry()
+        local conf = registry and registry._lovrconf
+        if conf and conf.window then
+            pcall(function()
+                lovr.system.openWindow(conf.window)
+            end)
+        end
+    end
+
+    return true
+end
+
 -- Parse command line arguments to check for special flags
 -- This allows users to modify behavior without changing code
 local function parseArgs()
@@ -80,6 +107,7 @@ function lovr.load(args)
         end
     else
         print("Running in headset-independent mode for iPad workflow (CXR_REQUIRE_HEADSET != 1).")
+        initGraphicsForHeadsetlessMode()
     end
 
     -- Opaque channel requires a valid OpenXR instance/headset path.
@@ -172,6 +200,12 @@ function lovr.draw(pass)
         end
     else
         pass:text("CloudXR server running (headset-independent mode)", 0, 1.2, -2.5, .35)
+        if CloudXRManager and CloudXRManager.isRecording() then
+            CloudXRManager.captureFrame(function(capturePass)
+                Renderer.drawOpaqueData(capturePass, lastReceivedData, cameraStatusText)
+                capturePass:text("CloudXR server running (headset-independent mode)", 0, 1.2, -2.5, .35)
+            end)
+        end
     end
 end
 
@@ -186,6 +220,10 @@ function lovr.update(dt)
     end
 
     local now = (lovr.timer and lovr.timer.getTime and lovr.timer.getTime()) or 0
+
+    if CloudXRManager then
+        CloudXRManager.processLocalRecordControl()
+    end
 
     if REQUIRE_HEADSET and not HeadsetManager.isActive() and not headsetInitialized then
         if now >= nextOpaqueRetryAt then

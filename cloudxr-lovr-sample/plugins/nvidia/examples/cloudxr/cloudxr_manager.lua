@@ -14,6 +14,8 @@ local CloudXRManager = {}
 local nv_cxr = nil              -- Reference to the loaded CloudXR plugin
 local lastReceivedData = nil    -- Cache of the most recent data received from headset
 local queuedOutboundData = nil  -- Optional app-originated outbound payload
+local localRecordCommandPath = "/tmp/cloudxr_lovr_record_cmd.txt"
+local localRecordStatusPath = "/tmp/cloudxr_lovr_record_status.txt"
 
 -- Recorder: captures frames directly from the LOVR render loop via named pipe.
 -- No X11 display required.
@@ -30,6 +32,23 @@ do
     end
 end
 
+local function shellEscape(value)
+    value = tostring(value or "")
+    return value:gsub("([\\ \t\r\n\"'|;:&<>%$%(%)%[%]%{%}])", "\\%1")
+end
+
+local function writeRecordStatus(ok, status, source, output, message)
+    local f = io.open(localRecordStatusPath, "w")
+    if not f then return end
+    f:write("ok=" .. (ok and "1" or "0") .. "\n")
+    f:write("status=" .. tostring(status or "unknown") .. "\n")
+    f:write("source=" .. tostring(source or "unknown") .. "\n")
+    f:write("output=" .. tostring(output or "") .. "\n")
+    f:write("message=" .. tostring(message or ""):gsub("[\r\n]", " ") .. "\n")
+    f:write("ts=" .. tostring(os.time()) .. "\n")
+    f:close()
+end
+
 local function sendRecordingError(reason)
     local payload = "status:recording_error"
     if reason and tostring(reason) ~= "" then
@@ -37,6 +56,86 @@ local function sendRecordingError(reason)
         payload = payload .. ":" .. safeReason
     end
     nv_cxr.sendOpaqueDataChannel(payload)
+end
+
+local function processRecordStart(source, output)
+    local active = recorderAvailable and Recorder.isActive() or false
+    if active then
+        writeRecordStatus(true, "recording", source, Recorder.outputFile or output, "already recording")
+        return "status:already_recording", true, Recorder.outputFile or output
+    end
+
+    if not recorderAvailable then
+        local msg = "recorder module unavailable"
+        writeRecordStatus(false, "error", source, output, msg)
+        return "status:recording_error:" .. msg, false, output
+    end
+
+    local target = output
+    if (not target or target == "") and source == "ipad" then
+        target = ((os.getenv("HOME") or "/tmp") .. "/work/cloudxr-vs-ipad/recordings/cloudxr_from_ipad_" .. os.date("%Y%m%d_%H%M%S") .. ".mp4")
+    end
+    if target and target ~= "" then
+        os.execute("mkdir -p " .. shellEscape((os.getenv("HOME") or "/tmp") .. "/work/cloudxr-vs-ipad/recordings"))
+    end
+
+    local ok, result = Recorder.start(target)
+    if ok then
+        print("Recording started (LOVR frame capture) → " .. tostring(result))
+        writeRecordStatus(true, "recording", source, result, "recording started")
+        return "status:recording_started", true, result
+    else
+        print("Recorder.start failed: " .. tostring(result))
+        writeRecordStatus(false, "error", source, target, tostring(result))
+        return "status:recording_error:" .. tostring(result), false, target
+    end
+end
+
+local function processRecordStop(source)
+    local active = recorderAvailable and Recorder.isActive() or false
+    if not active then
+        writeRecordStatus(true, "idle", source, "", "not recording")
+        return "status:not_recording", true, ""
+    end
+
+    local ok, result = Recorder.stop()
+    if ok then
+        print("Recording stopped → " .. tostring(result))
+        writeRecordStatus(true, "idle", source, tostring(result), "recording stopped")
+        return "status:recording_stopped", true, tostring(result)
+    else
+        print("Recorder.stop failed: " .. tostring(result))
+        writeRecordStatus(false, "error", source, "", tostring(result))
+        return "status:recording_error:" .. tostring(result), false, ""
+    end
+end
+
+local function handleLocalRecordCommand()
+    local f = io.open(localRecordCommandPath, "r")
+    if not f then return end
+    local line = f:read("*l")
+    f:close()
+    os.remove(localRecordCommandPath)
+    if not line or line == "" then return end
+
+    local command = line
+    local source = "unknown"
+    local output = ""
+    for part in string.gmatch(line, "([^|]+)") do
+        if part == "start" or part == "stop" then
+            command = part
+        elseif part:match("^source=") then
+            source = part:gsub("^source=", "")
+        elseif part:match("^output=") then
+            output = part:gsub("^output=", "")
+        end
+    end
+
+    if command == "start" then
+        processRecordStart(source, output)
+    elseif command == "stop" then
+        processRecordStop(source)
+    end
 end
 
 -- Initialize the CloudXR plugin by loading the nvidia.dll/nvidia.so library
@@ -187,6 +286,9 @@ function CloudXRManager.update()
         return false
     end
 
+    -- Always process local command-file controls (used by fallback API).
+    handleLocalRecordCommand()
+
     -- Check if the opaque data channel is connected to a headset
     if nv_cxr.getOpaqueDataChannelState() == nv_cxr.OPAQUE_DATA_CHANNEL_STATUS.CONNECTED then
         -- Send app-originated payload first (if queued by another module).
@@ -206,37 +308,18 @@ function CloudXRManager.update()
 
             -- Handle record commands sent from the iOS client.
             if data == "cmd:record_start" then
-                local active = recorderAvailable and Recorder.isActive() or false
-                if not active then
-                    if recorderAvailable then
-                        local ok, result = Recorder.start()
-                        if ok then
-                            print("Recording started (LOVR frame capture) → " .. tostring(result))
-                            nv_cxr.sendOpaqueDataChannel("status:recording_started")
-                        else
-                            print("Recorder.start failed: " .. tostring(result))
-                            sendRecordingError(result)
-                        end
-                    else
-                        print("Recorder not available")
-                        sendRecordingError("recorder module unavailable")
-                    end
+                local statusText = processRecordStart("opaque", "")
+                if statusText:match("^status:recording_error:") then
+                    sendRecordingError(statusText:gsub("^status:recording_error:", ""))
                 else
-                    nv_cxr.sendOpaqueDataChannel("status:already_recording")
+                    nv_cxr.sendOpaqueDataChannel(statusText)
                 end
             elseif data == "cmd:record_stop" then
-                local active = recorderAvailable and Recorder.isActive() or false
-                if active then
-                    local ok, result = Recorder.stop()
-                    if ok then
-                        print("Recording stopped → " .. tostring(result))
-                        nv_cxr.sendOpaqueDataChannel("status:recording_stopped")
-                    else
-                        print("Recorder.stop failed: " .. tostring(result))
-                        sendRecordingError(result)
-                    end
+                local statusText = processRecordStop("opaque")
+                if statusText:match("^status:recording_error:") then
+                    sendRecordingError(statusText:gsub("^status:recording_error:", ""))
                 else
-                    nv_cxr.sendOpaqueDataChannel("status:not_recording")
+                    nv_cxr.sendOpaqueDataChannel(statusText)
                 end
             else
                 -- Echo unknown commands back for debugging.
@@ -258,6 +341,11 @@ function CloudXRManager.update()
             nv_cxr.createOpaqueDataChannel(uuid)
         end
     end
+end
+
+-- Process local fallback API commands without requiring opaque channel state.
+function CloudXRManager.processLocalRecordControl()
+    handleLocalRecordCommand()
 end
 
 -- Queue one message to be sent to the client on the next connected frame.
@@ -287,6 +375,10 @@ end
 -- Returns true if currently recording.
 function CloudXRManager.isRecording()
     return recorderAvailable and Recorder.isActive() or false
+end
+
+function CloudXRManager.localRecordStatusPath()
+    return localRecordStatusPath
 end
 
 -- Clean up all CloudXR resources
