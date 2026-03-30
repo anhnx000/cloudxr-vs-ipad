@@ -44,7 +44,6 @@
 		9CAEE0ED2D307CF90030E3F6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA4712BF7D954004B6F6B /* Preview Assets.xcassets */; };
 		9CAEE0EE2D307CF90030E3F6 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA44B2BF7D8C5004B6F6B /* Settings.bundle */; };
 		9CAEE0EF2D307CF90030E3F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01AFA43D2BF7D8C5004B6F6B /* Assets.xcassets */; };
-		9CAEE0F82D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9CAEE0F72D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist */; };
 		9CC51E182D308742003A1CF0 /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC51E172D308742003A1CF0 /* Color+hex.swift */; };
 		9CC51E192D308742003A1CF0 /* Color+hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC51E172D308742003A1CF0 /* Color+hex.swift */; };
 		A725B0302C6EC005000248FE /* StarRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A725B02F2C6EC005000248FE /* StarRatingView.swift */; };
@@ -278,7 +277,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1530;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					01A8A6652BD99BC500D84DBC = {
 						CreatedOnToolsVersion = 15.3;
@@ -298,6 +297,9 @@
 				Base,
 			);
 			mainGroup = EAA206412B16737300B5867E;
+			packageReferences = (
+				9CF0A0212EEB7E4800F6F1A1 /* XCRemoteSwiftPackageReference "cloudxr-framework" */,
+			);
 			productRefGroup = EAA206412B16737300B5867E;
 			projectDirPath = "";
 			projectRoot = "";
@@ -334,7 +336,6 @@
 				01AFA4732BF7D954004B6F6B /* Preview Assets.xcassets in Resources */,
 				01AFA4672BF7D8C5004B6F6B /* Settings.bundle in Resources */,
 				9C981CE92D30968500C3A953 /* Assets.xcassets in Resources */,
-				9CAEE0F82D3082160030E3F6 /* CloudXRViewer-visionOS-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -595,7 +596,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_ASSET_PATHS = "\"CloudXRViewer/Preview Content\"";
-				DEVELOPMENT_TEAM = 6KR3T733EC;
+				DEVELOPMENT_TEAM = V863WBU8QP;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -695,7 +696,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"CloudXRViewer/Preview Content\"";
-				DEVELOPMENT_TEAM = 6KR3T733EC;
+				DEVELOPMENT_TEAM = V863WBU8QP;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -782,6 +783,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "xrsimulator xros";
 				TARGETED_DEVICE_FAMILY = visionOS;
 				XROS_DEPLOYMENT_TARGET = 2.4;
@@ -820,6 +822,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "xrsimulator xros";
 				TARGETED_DEVICE_FAMILY = visionOS;
 				XROS_DEPLOYMENT_TARGET = 2.4;
@@ -1054,13 +1057,26 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		9CF0A0212EEB7E4800F6F1A1 /* XCRemoteSwiftPackageReference "cloudxr-framework" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/NVIDIA/cloudxr-framework";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		01C927EB2CB9BF64006D4D8D /* CloudXRKit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 9CF0A0212EEB7E4800F6F1A1 /* XCRemoteSwiftPackageReference "cloudxr-framework" */;
 			productName = CloudXRKit;
 		};
 		9CAEE0BD2D307CF90030E3F6 /* CloudXRKit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 9CF0A0212EEB7E4800F6F1A1 /* XCRemoteSwiftPackageReference "cloudxr-framework" */;
 			productName = CloudXRKit;
 		};
 /* End XCSwiftPackageProductDependency section */

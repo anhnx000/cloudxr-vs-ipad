@@ -24,7 +24,7 @@ import OSLog
 
 struct SessionConfigView: View {
     @AppStorage("hostAddress") var hostAddress: String = ""
-    @AppStorage("zone") private(set) var zone: Zone = .us_west
+    @AppStorage("zone") var zone: Zone = .us_west
     @AppStorage("authMethod") private(set) var authMethod: AuthMethod = .starfleet
     @AppStorage("resolutionPreset") var resolutionPreset: ResolutionPreset = .standardPreset
 

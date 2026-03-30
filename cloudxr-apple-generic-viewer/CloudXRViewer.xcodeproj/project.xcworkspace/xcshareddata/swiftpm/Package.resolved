@@ -1,0 +1,15 @@
+{
+  "originHash" : "12a7126ec35c6482594548601becc91e0fe6fcf3cca571ecd35341150b31164d",
+  "pins" : [
+    {
+      "identity" : "cloudxr-framework",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/NVIDIA/cloudxr-framework",
+      "state" : {
+        "revision" : "6535e5aa7446f892dc17a24a80957b94ff6b5c76",
+        "version" : "6.0.3"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -70,9 +70,18 @@ function CloudXRManager.initRuntime(args)
     -- Configure CloudXR runtime properties before starting the service
     -- These settings control how CloudXR behaves and which headset to target
 
-    -- Set device profile to Apple Vision Pro (can be overridden by environment variables)
-    if not nv_cxr.setRuntimeStringProperty("device-profile", "apple-vision-pro") then
-        print("Failed to set device profile")
+    -- Do not force a headset profile by default.
+    -- Forcing "apple-vision-pro" causes config mismatch when the client is iPad.
+    -- If needed, the profile can be explicitly provided via env var CXR_DEVICE_PROFILE.
+    local forcedProfile = os.getenv("CXR_DEVICE_PROFILE")
+    if forcedProfile and forcedProfile ~= "" then
+        if not nv_cxr.setRuntimeStringProperty("device-profile", forcedProfile) then
+            print("Failed to set device profile:", forcedProfile)
+        else
+            print("Using forced device profile:", forcedProfile)
+        end
+    else
+        print("No device profile forced; using runtime auto profile selection")
     end
 
     -- Enable audio streaming to the headset

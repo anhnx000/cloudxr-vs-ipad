@@ -103,6 +103,13 @@ extension SessionConfigView {
                 }
             }
         }
+        .onAppear {
+            // iOS direct-to-server flow should default to manual IP mode.
+            // This avoids accidental cloud-zone config that can trigger server/client mismatches.
+            if zone != .ipAddress {
+                zone = .ipAddress
+            }
+        }
         .padding(.top, 100)
         .frame(minWidth: 600, maxWidth: 600, minHeight: 360, maxHeight: 690)
     }

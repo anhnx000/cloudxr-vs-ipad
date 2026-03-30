@@ -8,4 +8,4 @@
 
 // Build configuration
 MARKETING_VERSION = 6.0.0
-PRODUCT_BUNDLE_IDENTIFIER = com.nvidia.cloudxr-viewer
+PRODUCT_BUNDLE_IDENTIFIER = com.xuananh.cloudxrviewer
