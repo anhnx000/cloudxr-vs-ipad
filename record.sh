@@ -50,7 +50,7 @@ build_vs_pipeline() {
 
 start_recording() {
     local output="${1:-}"
-    [ -z "$output" ] && output="$RECORDINGS_DIR/record_$(date +%Y%m%d_%H%M%S).mp4"
+    [ -z "$output" ] && output="$RECORDINGS_DIR/ipad_airplay_record_$(date +%Y%m%d_%H%M%S).mp4"
 
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
         echo "Already recording. Run: ./record.sh stop"
