@@ -44,29 +44,53 @@ struct ServerActionsView: View {
     @Binding var currentChannel: MessageChannel?
 
     @State private var channelReaderTask: Task<Void, Never>?
+    @State private var pendingTimeoutTask: Task<Void, Never>?
     @State private var receivedMessageCount: Int = 0
 
-    func sendMessage(message: String) {
+    @discardableResult
+    func sendMessage(message: String) -> Bool {
         guard currentChannelSelection != nil else {
             Self.logger.warning("No channel selected")
             lastMessageSent = "Error - no channel"
-            return
+            return false
         }
         guard let messageData = message.data(using: .utf8) else {
             Self.logger.warning("String message could not be converted to data")
             lastMessageSent = "Error"
-            return
+            return false
         }
         if let channel = currentChannel {
+            guard channel.status == .ready else {
+                Self.logger.warning("Channel is not ready: \(channel.status.rawValue)")
+                lastMessageSent = "Error - channel not ready (\(channel.status.rawValue))"
+                return false
+            }
             if channel.sendServerMessage(messageData) {
                 lastMessageSent = message
+                return true
             } else {
                 Self.logger.warning("Failed to send message via current channel")
                 lastMessageSent = "Error - failed to send"
+                return false
             }
         } else {
             Self.logger.warning("No current channel available for send")
             lastMessageSent = "Error - no channel"
+            return false
+        }
+    }
+
+    private func startPendingTimeout(seconds: UInt64 = 5) {
+        pendingTimeoutTask?.cancel()
+        pendingTimeoutTask = Task {
+            try? await Task.sleep(nanoseconds: seconds * 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                if recordingState == .pending {
+                    recordingState = .idle
+                    lastMessageReceived = "Không nhận phản hồi từ server cho lệnh ghi hình."
+                }
+            }
         }
     }
 
@@ -75,12 +99,19 @@ struct ServerActionsView: View {
         lastMessageReceived = "Message \(receivedMessageCount): " + text
         switch text {
         case "status:recording_started":
+            pendingTimeoutTask?.cancel()
             recordingState = .recording
         case "status:recording_stopped":
+            pendingTimeoutTask?.cancel()
             recordingState = .idle
         case "status:already_recording":
+            pendingTimeoutTask?.cancel()
             recordingState = .recording
         case "status:not_recording":
+            pendingTimeoutTask?.cancel()
+            recordingState = .idle
+        case "status:recording_error":
+            pendingTimeoutTask?.cancel()
             recordingState = .idle
         default:
             break
@@ -104,8 +135,10 @@ struct ServerActionsView: View {
         switch recordingState {
         case .idle:
             Button(action: {
-                sendMessage(message: "cmd:record_start")
-                recordingState = .pending
+                if sendMessage(message: "cmd:record_start") {
+                    recordingState = .pending
+                    startPendingTimeout()
+                }
             }) {
                 Label("Record", systemImage: "record.circle.fill")
                     .font(.headline)
@@ -115,7 +148,7 @@ struct ServerActionsView: View {
                     .background(Color.red)
                     .clipShape(Capsule())
             }
-            .disabled(currentChannelSelection == nil)
+            .disabled(currentChannel == nil)
 
         case .pending:
             HStack(spacing: 8) {
@@ -133,8 +166,10 @@ struct ServerActionsView: View {
 
         case .recording:
             Button(action: {
-                sendMessage(message: "cmd:record_stop")
-                recordingState = .pending
+                if sendMessage(message: "cmd:record_stop") {
+                    recordingState = .pending
+                    startPendingTimeout()
+                }
             }) {
                 Label("Stop Recording", systemImage: "stop.fill")
                     .font(.headline)
@@ -144,7 +179,7 @@ struct ServerActionsView: View {
                     .background(Color(red: 0.2, green: 0.2, blue: 0.2))
                     .clipShape(Capsule())
             }
-            .disabled(currentChannelSelection == nil)
+            .disabled(currentChannel == nil)
         }
     }
 
@@ -275,6 +310,8 @@ struct ServerActionsView: View {
         .onDisappear {
             channelReaderTask?.cancel()
             channelReaderTask = nil
+            pendingTimeoutTask?.cancel()
+            pendingTimeoutTask = nil
         }
     }
 }
