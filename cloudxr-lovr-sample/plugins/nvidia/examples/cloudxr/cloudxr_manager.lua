@@ -30,6 +30,15 @@ do
     end
 end
 
+local function sendRecordingError(reason)
+    local payload = "status:recording_error"
+    if reason and tostring(reason) ~= "" then
+        local safeReason = tostring(reason):gsub("[:\r\n]", " ")
+        payload = payload .. ":" .. safeReason
+    end
+    nv_cxr.sendOpaqueDataChannel(payload)
+end
+
 -- Initialize the CloudXR plugin by loading the nvidia.dll/nvidia.so library
 -- This loads the CloudXR plugin and makes its functions available
 function CloudXRManager.init()
@@ -206,11 +215,11 @@ function CloudXRManager.update()
                             nv_cxr.sendOpaqueDataChannel("status:recording_started")
                         else
                             print("Recorder.start failed: " .. tostring(result))
-                            nv_cxr.sendOpaqueDataChannel("status:recording_error")
+                            sendRecordingError(result)
                         end
                     else
                         print("Recorder not available")
-                        nv_cxr.sendOpaqueDataChannel("status:recording_error")
+                        sendRecordingError("recorder module unavailable")
                     end
                 else
                     nv_cxr.sendOpaqueDataChannel("status:already_recording")
@@ -224,7 +233,7 @@ function CloudXRManager.update()
                         nv_cxr.sendOpaqueDataChannel("status:recording_stopped")
                     else
                         print("Recorder.stop failed: " .. tostring(result))
-                        nv_cxr.sendOpaqueDataChannel("status:recording_error")
+                        sendRecordingError(result)
                     end
                 else
                     nv_cxr.sendOpaqueDataChannel("status:not_recording")

@@ -46,12 +46,17 @@ struct ServerActionsView: View {
     @State private var channelReaderTask: Task<Void, Never>?
     @State private var pendingTimeoutTask: Task<Void, Never>?
     @State private var receivedMessageCount: Int = 0
+    
+    private var isCurrentChannelReady: Bool {
+        currentChannel?.status == .ready
+    }
 
     @discardableResult
     func sendMessage(message: String) -> Bool {
         guard currentChannelSelection != nil else {
             Self.logger.warning("No channel selected")
             lastMessageSent = "Error - no channel"
+            lastMessageReceived = "Không thể gửi lệnh: chưa chọn channel."
             return false
         }
         guard let messageData = message.data(using: .utf8) else {
@@ -63,6 +68,7 @@ struct ServerActionsView: View {
             guard channel.status == .ready else {
                 Self.logger.warning("Channel is not ready: \(channel.status.rawValue)")
                 lastMessageSent = "Error - channel not ready (\(channel.status.rawValue))"
+                lastMessageReceived = "Không thể gửi lệnh: channel chưa sẵn sàng (\(channel.status.rawValue))."
                 return false
             }
             if channel.sendServerMessage(messageData) {
@@ -71,11 +77,13 @@ struct ServerActionsView: View {
             } else {
                 Self.logger.warning("Failed to send message via current channel")
                 lastMessageSent = "Error - failed to send"
+                lastMessageReceived = "Không thể gửi lệnh tới server."
                 return false
             }
         } else {
             Self.logger.warning("No current channel available for send")
             lastMessageSent = "Error - no channel"
+            lastMessageReceived = "Không thể gửi lệnh: chưa có channel."
             return false
         }
     }
@@ -97,6 +105,17 @@ struct ServerActionsView: View {
     private func handleServerMessage(_ text: String) {
         receivedMessageCount += 1
         lastMessageReceived = "Message \(receivedMessageCount): " + text
+        if text.hasPrefix("status:recording_error") {
+            pendingTimeoutTask?.cancel()
+            recordingState = .idle
+            let detail = text.replacingOccurrences(of: "status:recording_error:", with: "")
+            if detail != text, !detail.isEmpty {
+                lastMessageReceived = "Record failed: \(detail)"
+            } else {
+                lastMessageReceived = "Record failed: server reported recording_error."
+            }
+            return
+        }
         switch text {
         case "status:recording_started":
             pendingTimeoutTask?.cancel()
@@ -108,9 +127,6 @@ struct ServerActionsView: View {
             pendingTimeoutTask?.cancel()
             recordingState = .recording
         case "status:not_recording":
-            pendingTimeoutTask?.cancel()
-            recordingState = .idle
-        case "status:recording_error":
             pendingTimeoutTask?.cancel()
             recordingState = .idle
         default:
@@ -135,9 +151,11 @@ struct ServerActionsView: View {
         switch recordingState {
         case .idle:
             Button(action: {
+                lastMessageReceived = "Đang gửi lệnh bắt đầu ghi hình..."
                 if sendMessage(message: "cmd:record_start") {
                     recordingState = .pending
                     startPendingTimeout()
+                    lastMessageReceived = "Đã gửi lệnh bắt đầu ghi hình, chờ phản hồi từ server..."
                 }
             }) {
                 Label("Record", systemImage: "record.circle.fill")
@@ -148,7 +166,6 @@ struct ServerActionsView: View {
                     .background(Color.red)
                     .clipShape(Capsule())
             }
-            .disabled(currentChannel == nil)
 
         case .pending:
             HStack(spacing: 8) {
@@ -179,7 +196,7 @@ struct ServerActionsView: View {
                     .background(Color(red: 0.2, green: 0.2, blue: 0.2))
                     .clipShape(Capsule())
             }
-            .disabled(currentChannel == nil)
+            .disabled(!isCurrentChannelReady)
         }
     }
 
@@ -263,11 +280,11 @@ struct ServerActionsView: View {
                 HStack {
                     Spacer()
                     Button("Action 1") { sendMessage(message: "Action 1") }
-                        .disabled(currentChannelSelection == nil)
+                        .disabled(!isCurrentChannelReady)
                         .buttonStyle(.borderedProminent)
                     Spacer()
                     Button("Action 2") { sendMessage(message: "Action 2") }
-                        .disabled(currentChannelSelection == nil)
+                        .disabled(!isCurrentChannelReady)
                         .buttonStyle(.borderedProminent)
                     Spacer()
                 }
