@@ -120,6 +120,37 @@ RUNTIME_JSON="$(realpath "$RUNTIME_JSON")"
 # Set OpenXR runtime to CloudXR
 export XR_RUNTIME_JSON="$RUNTIME_JSON"
 
+# Optional fallback record API for iPad flow (independent from OpenXR/headset).
+RECORD_API_PID_FILE="/tmp/cloudxr_record_api.pid"
+RECORD_API_LOG_FILE="/tmp/cloudxr_record_api.log"
+RECORD_API_SCRIPT="$(pwd)/tools/record_control_api.py"
+STARTED_RECORD_API=0
+
+cleanup() {
+    if [ "$STARTED_RECORD_API" -eq 1 ] && [ -f "$RECORD_API_PID_FILE" ]; then
+        local pid
+        pid="$(cat "$RECORD_API_PID_FILE" 2>/dev/null || true)"
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+        fi
+        rm -f "$RECORD_API_PID_FILE"
+    fi
+}
+trap cleanup EXIT
+
+if command -v python3 >/dev/null 2>&1 && [ -f "$RECORD_API_SCRIPT" ]; then
+    if [ -f "$RECORD_API_PID_FILE" ] && kill -0 "$(cat "$RECORD_API_PID_FILE")" 2>/dev/null; then
+        echo -e "${YELLOW}Record control API already running (PID: $(cat "$RECORD_API_PID_FILE")).${NC}"
+    else
+        nohup python3 "$RECORD_API_SCRIPT" --host 0.0.0.0 --port 49080 > "$RECORD_API_LOG_FILE" 2>&1 &
+        echo "$!" > "$RECORD_API_PID_FILE"
+        STARTED_RECORD_API=1
+        echo -e "${GREEN}Record control API started on :49080 (PID: $!).${NC}"
+    fi
+else
+    echo -e "${YELLOW}Record control API not started (python3 or script missing).${NC}"
+fi
+
 # Run
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Running CloudXR LOVR Example${NC}"

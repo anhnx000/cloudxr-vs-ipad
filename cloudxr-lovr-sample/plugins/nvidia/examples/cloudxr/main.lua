@@ -14,6 +14,15 @@ local HeadsetManager = require('headset_manager')  -- Manages OpenXR headset ini
 local Renderer = require('renderer')               -- Handles rendering of VR content and data
 local AudioManager = require('audio_manager')      -- Manages audio playback triggered by hand gestures
 local CameraHook = require('camera_hook')          -- Prototype bridge for camera metadata plumbing
+local OPAQUE_RETRY_INTERVAL_SEC = 2.0
+local REQUIRE_HEADSET = os.getenv("CXR_REQUIRE_HEADSET") == "1"
+
+local headsetInitialized = false
+local opaqueChannelInitialized = false
+local audioInitAttempted = false
+local cameraHookInitialized = false
+local appReadyLogged = false
+local nextOpaqueRetryAt = 0
 
 -- Parse command line arguments to check for special flags
 -- This allows users to modify behavior without changing code
@@ -61,30 +70,42 @@ function lovr.load(args)
         print("Skipping CloudXR Runtime initialization (--use_system_runtime flag detected)")
     end
     
-    -- Initialize OpenXR headset and graphics
-    -- This creates the OpenXR instance and starts VR rendering
-    if not HeadsetManager.init() then
-        print("Failed to initialize headset")
-        return
+    -- iPad-centric default: keep CloudXR server alive without requiring headset.
+    -- Set CXR_REQUIRE_HEADSET=1 to restore strict headset-dependent behavior.
+    if REQUIRE_HEADSET then
+        if HeadsetManager.init() then
+            headsetInitialized = true
+        else
+            print("Headset unavailable at startup; running and retrying without exiting.")
+        end
+    else
+        print("Running in headset-independent mode for iPad workflow (CXR_REQUIRE_HEADSET != 1).")
     end
 
-    -- Initialize opaque data channels AFTER OpenXR is ready
-    -- This enables custom communication between app and headset
-    if not CloudXRManager.initOpaqueDataChannel() then
-        print("Failed to initialize Opaque Data Channel")
-        return
+    -- Opaque channel is retried independently from headset lifecycle.
+    if CloudXRManager.initOpaqueDataChannel() then
+        opaqueChannelInitialized = true
+    else
+        print("Opaque Data Channel not ready yet; will retry initialization.")
     end
 
-    -- Initialize optional camera hook prototype.
-    CameraHook.init()
-    
-    -- Initialize audio manager for hand gesture-triggered audio playback
-    if not AudioManager.init() then
-        print("Failed to initialize Audio Manager")
-        -- Continue anyway, audio is not critical
+    if not cameraHookInitialized then
+        CameraHook.init()
+        cameraHookInitialized = true
     end
-    
-    print("Application initialized successfully")
+
+    if REQUIRE_HEADSET and headsetInitialized and not audioInitAttempted then
+        audioInitAttempted = true
+        if not AudioManager.init() then
+            print("Failed to initialize Audio Manager")
+            -- Continue anyway, audio is not critical
+        end
+    end
+
+    if opaqueChannelInitialized then
+        appReadyLogged = true
+        print("Application initialized successfully")
+    end
 end
 
 -- LÖVR quit function - called when the application is shutting down
@@ -123,25 +144,30 @@ function lovr.draw(pass)
         Renderer.drawOpaqueData(pass, lastReceivedData, cameraStatusText)
     end
     
-    -- Get controller models for rendering
-    local models = HeadsetManager.getModels()
-    
-    -- Draw hand joints and controller models in the VR space
-    Renderer.drawHandJoints(pass, lastReceivedData)
-    Renderer.drawControllers(pass, models)
-  
-    -- Reset color to white for subsequent rendering
-    pass:setColor(1, 1, 1, 1)
+    local headsetActive = REQUIRE_HEADSET and HeadsetManager.isActive()
+    if headsetActive then
+        -- Get controller models for rendering
+        local models = HeadsetManager.getModels()
 
-    -- If recording is active, capture this frame into the GStreamer pipe.
-    -- Recorder.captureFrame creates its own off-screen Pass and calls
-    -- the drawFn with that pass — no X11 or window required.
-    if CloudXRManager and CloudXRManager.isRecording() then
-        CloudXRManager.captureFrame(function(capturePass)
-            Renderer.drawOpaqueData(capturePass, lastReceivedData, cameraStatusText)
-            Renderer.drawHandJoints(capturePass, lastReceivedData)
-            Renderer.drawControllers(capturePass, models)
-        end)
+        -- Draw hand joints and controller models in the VR space
+        Renderer.drawHandJoints(pass, lastReceivedData)
+        Renderer.drawControllers(pass, models)
+    
+        -- Reset color to white for subsequent rendering
+        pass:setColor(1, 1, 1, 1)
+
+        -- If recording is active, capture this frame into the GStreamer pipe.
+        -- Recorder.captureFrame creates its own off-screen Pass and calls
+        -- the drawFn with that pass — no X11 or window required.
+        if CloudXRManager and CloudXRManager.isRecording() then
+            CloudXRManager.captureFrame(function(capturePass)
+                Renderer.drawOpaqueData(capturePass, lastReceivedData, cameraStatusText)
+                Renderer.drawHandJoints(capturePass, lastReceivedData)
+                Renderer.drawControllers(capturePass, models)
+            end)
+        end
+    else
+        pass:text("CloudXR server running (headset-independent mode)", 0, 1.2, -2.5, .35)
     end
 end
 
@@ -155,14 +181,31 @@ function lovr.update(dt)
         return
     end
 
-    -- Only update if the headset is active and tracking
-    if not HeadsetManager.isActive() then
-        return
+    local now = (lovr.timer and lovr.timer.getTime and lovr.timer.getTime()) or 0
+
+    if REQUIRE_HEADSET and not HeadsetManager.isActive() and not headsetInitialized then
+        if now >= nextOpaqueRetryAt then
+            nextOpaqueRetryAt = now + OPAQUE_RETRY_INTERVAL_SEC
+            if HeadsetManager.init() then
+                headsetInitialized = true
+                print("Headset initialized on retry.")
+            else
+                print("Headset still unavailable; retrying...")
+            end
+        end
     end
     
+    if not opaqueChannelInitialized and now >= nextOpaqueRetryAt then
+        nextOpaqueRetryAt = now + OPAQUE_RETRY_INTERVAL_SEC
+        if CloudXRManager.initOpaqueDataChannel() then
+            opaqueChannelInitialized = true
+            print("Opaque Data Channel initialized on retry.")
+        end
+    end
+
     -- Update CloudXR opaque data channels
     -- This processes any incoming data from the headset and sends outgoing data
-    if CloudXRManager then
+    if CloudXRManager and opaqueChannelInitialized then
         CloudXRManager.update()
     end
 
@@ -174,7 +217,19 @@ function lovr.update(dt)
     end
     
     -- Update audio manager to check for hand gestures
-    if AudioManager then
+    if REQUIRE_HEADSET and HeadsetManager.isActive() and not audioInitAttempted then
+        audioInitAttempted = true
+        if not AudioManager.init() then
+            print("Failed to initialize Audio Manager")
+        end
+    end
+
+    if REQUIRE_HEADSET and HeadsetManager.isActive() and AudioManager then
         AudioManager.update()
+    end
+
+    if opaqueChannelInitialized and not appReadyLogged then
+        appReadyLogged = true
+        print("Application initialized successfully")
     end
 end
