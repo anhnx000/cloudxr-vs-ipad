@@ -29,6 +29,7 @@ struct ServerActionsView: View {
 
     @State var lastMessageSent: String = ""
     @State var lastMessageReceived: String = ""
+    @State private var isRecording: Bool = false
 
     @Binding var currentChannelSelection: ChannelInfo?
     @Binding var currentChannel: MessageChannel?
@@ -92,7 +93,13 @@ struct ServerActionsView: View {
                         channelReaderTask = Task {
                             for await message in channel.receivedMessageStream {
                                 receivedMessageCount += 1
-                                lastMessageReceived = "Message \(receivedMessageCount): " + String(decoding: message, as: UTF8.self)
+                                let text = String(decoding: message, as: UTF8.self)
+                                lastMessageReceived = "Message \(receivedMessageCount): " + text
+                                if text == "status:recording_started" {
+                                    isRecording = true
+                                } else if text == "status:recording_stopped" {
+                                    isRecording = false
+                                }
                             }
                         }
                     }
@@ -116,7 +123,7 @@ struct ServerActionsView: View {
 
                 Divider()
 
-                VStack {
+                VStack(spacing: 16) {
                     HStack {
                         Spacer()
                         Button("Action 1") {
@@ -131,6 +138,51 @@ struct ServerActionsView: View {
                         .disabled(currentChannelSelection == nil)
                         .buttonStyle(.borderedProminent)
                         Spacer()
+                    }
+
+                    Divider()
+
+                    HStack(spacing: 24) {
+                        Spacer()
+                        if !isRecording {
+                            Button(action: {
+                                sendMessage(message: "cmd:record_start")
+                                isRecording = true
+                            }) {
+                                Label("Record", systemImage: "record.circle")
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(Color.red)
+                                    .cornerRadius(10)
+                            }
+                            .disabled(currentChannelSelection == nil)
+                        } else {
+                            Button(action: {
+                                sendMessage(message: "cmd:record_stop")
+                                isRecording = false
+                            }) {
+                                Label("Stop", systemImage: "stop.circle.fill")
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(Color.gray)
+                                    .cornerRadius(10)
+                            }
+                            .disabled(currentChannelSelection == nil)
+                        }
+                        Spacer()
+                    }
+                    
+                    if isRecording {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                            Text("Recording...")
+                                .foregroundColor(.red)
+                                .font(.footnote.bold())
+                        }
                     }
                 }
                 Divider()
@@ -155,7 +207,13 @@ struct ServerActionsView: View {
                 channelReaderTask = Task {
                     for await message in channel.receivedMessageStream {
                         receivedMessageCount += 1
-                        lastMessageReceived = "Message \(receivedMessageCount): " + String(decoding: message, as: UTF8.self)
+                        let text = String(decoding: message, as: UTF8.self)
+                        lastMessageReceived = "Message \(receivedMessageCount): " + text
+                        if text == "status:recording_started" {
+                            isRecording = true
+                        } else if text == "status:recording_stopped" {
+                            isRecording = false
+                        }
                     }
                 }
             }

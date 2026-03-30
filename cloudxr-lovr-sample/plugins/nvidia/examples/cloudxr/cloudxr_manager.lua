@@ -15,6 +15,20 @@ local nv_cxr = nil              -- Reference to the loaded CloudXR plugin
 local lastReceivedData = nil    -- Cache of the most recent data received from headset
 local queuedOutboundData = nil  -- Optional app-originated outbound payload
 
+-- Recording state
+local isRecording = false
+local recordScriptPath = os.getenv("RECORD_SCRIPT") or
+    (os.getenv("HOME") .. "/work/cloudxr-vs-ipad/record.sh")
+
+local function execRecordCommand(cmd)
+    local fullCmd = recordScriptPath .. " " .. cmd .. " &"
+    local ok = os.execute(fullCmd)
+    if not ok then
+        print("record.sh " .. cmd .. " failed")
+    end
+    return ok
+end
+
 -- Initialize the CloudXR plugin by loading the nvidia.dll/nvidia.so library
 -- This loads the CloudXR plugin and makes its functions available
 function CloudXRManager.init()
@@ -177,15 +191,34 @@ function CloudXRManager.update()
         -- Try to receive data from the headset
         local data = nv_cxr.receiveOpaqueDataChannel()
         if data then
-            -- Log received data to console for debugging
             print("Received data:", data)
             lastReceivedData = data
 
-            -- Echo the received data back to demonstrate bi-directional communication
-            -- In a real application, you would process the data and send appropriate responses
-            local success = nv_cxr.sendOpaqueDataChannel("Echo: " .. data)
-            if not success then
-                print("Failed to echo received data:", data)
+            -- Handle record commands sent from the iOS client.
+            if data == "cmd:record_start" then
+                if not isRecording then
+                    print("Starting recording via record.sh...")
+                    execRecordCommand("start")
+                    isRecording = true
+                    nv_cxr.sendOpaqueDataChannel("status:recording_started")
+                else
+                    nv_cxr.sendOpaqueDataChannel("status:already_recording")
+                end
+            elseif data == "cmd:record_stop" then
+                if isRecording then
+                    print("Stopping recording via record.sh...")
+                    execRecordCommand("stop")
+                    isRecording = false
+                    nv_cxr.sendOpaqueDataChannel("status:recording_stopped")
+                else
+                    nv_cxr.sendOpaqueDataChannel("status:not_recording")
+                end
+            else
+                -- Echo unknown commands back for debugging.
+                local success = nv_cxr.sendOpaqueDataChannel("Echo: " .. data)
+                if not success then
+                    print("Failed to echo received data:", data)
+                end
             end
         end
     elseif nv_cxr.getOpaqueDataChannelState() == nv_cxr.OPAQUE_DATA_CHANNEL_STATUS.DISCONNECTED then
