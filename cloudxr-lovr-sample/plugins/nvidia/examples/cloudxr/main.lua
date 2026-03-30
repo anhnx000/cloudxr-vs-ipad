@@ -132,6 +132,20 @@ function lovr.draw(pass)
   
     -- Reset color to white for subsequent rendering
     pass:setColor(1, 1, 1, 1)
+
+    -- If recording is active, capture this frame into the GStreamer pipe.
+    -- This runs every frame without X11, writing raw pixels to a named pipe
+    -- that GStreamer reads and encodes to MP4 via NVENC.
+    if CloudXRManager and CloudXRManager.isRecording() then
+        CloudXRManager.captureFrame(function()
+            local p = lovr.graphics.getWindowPass()
+            if p then
+                Renderer.drawHandJoints(p, lastReceivedData)
+                Renderer.drawControllers(p, models)
+                Renderer.drawOpaqueData(p, lastReceivedData, cameraStatusText)
+            end
+        end)
+    end
 end
 
 -- LÖVR update function - called every frame for game logic and updates

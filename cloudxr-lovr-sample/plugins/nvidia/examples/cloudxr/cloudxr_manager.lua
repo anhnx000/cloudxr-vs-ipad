@@ -15,18 +15,19 @@ local nv_cxr = nil              -- Reference to the loaded CloudXR plugin
 local lastReceivedData = nil    -- Cache of the most recent data received from headset
 local queuedOutboundData = nil  -- Optional app-originated outbound payload
 
--- Recording state
-local isRecording = false
-local recordScriptPath = os.getenv("RECORD_SCRIPT") or
-    (os.getenv("HOME") .. "/work/cloudxr-vs-ipad/record.sh")
-
-local function execRecordCommand(cmd)
-    local fullCmd = recordScriptPath .. " " .. cmd .. " &"
-    local ok = os.execute(fullCmd)
-    if not ok then
-        print("record.sh " .. cmd .. " failed")
+-- Recorder: captures frames directly from the LOVR render loop via named pipe.
+-- No X11 display required.
+local Recorder = nil
+local recorderAvailable = false
+do
+    local ok, mod = pcall(require, 'recorder')
+    if ok then
+        Recorder = mod
+        recorderAvailable = true
+        print("Recorder module loaded (LOVR frame capture mode)")
+    else
+        print("Recorder module not available, falling back to record.sh: " .. tostring(mod))
     end
-    return ok
 end
 
 -- Initialize the CloudXR plugin by loading the nvidia.dll/nvidia.so library
@@ -196,20 +197,35 @@ function CloudXRManager.update()
 
             -- Handle record commands sent from the iOS client.
             if data == "cmd:record_start" then
-                if not isRecording then
-                    print("Starting recording via record.sh...")
-                    execRecordCommand("start")
-                    isRecording = true
-                    nv_cxr.sendOpaqueDataChannel("status:recording_started")
+                local active = recorderAvailable and Recorder.isActive() or false
+                if not active then
+                    if recorderAvailable then
+                        local ok, result = Recorder.start()
+                        if ok then
+                            print("Recording started (LOVR frame capture) → " .. tostring(result))
+                            nv_cxr.sendOpaqueDataChannel("status:recording_started")
+                        else
+                            print("Recorder.start failed: " .. tostring(result))
+                            nv_cxr.sendOpaqueDataChannel("status:recording_error")
+                        end
+                    else
+                        print("Recorder not available")
+                        nv_cxr.sendOpaqueDataChannel("status:recording_error")
+                    end
                 else
                     nv_cxr.sendOpaqueDataChannel("status:already_recording")
                 end
             elseif data == "cmd:record_stop" then
-                if isRecording then
-                    print("Stopping recording via record.sh...")
-                    execRecordCommand("stop")
-                    isRecording = false
-                    nv_cxr.sendOpaqueDataChannel("status:recording_stopped")
+                local active = recorderAvailable and Recorder.isActive() or false
+                if active then
+                    local ok, result = Recorder.stop()
+                    if ok then
+                        print("Recording stopped → " .. tostring(result))
+                        nv_cxr.sendOpaqueDataChannel("status:recording_stopped")
+                    else
+                        print("Recorder.stop failed: " .. tostring(result))
+                        nv_cxr.sendOpaqueDataChannel("status:recording_error")
+                    end
                 else
                     nv_cxr.sendOpaqueDataChannel("status:not_recording")
                 end
@@ -248,6 +264,20 @@ end
 -- This is used by the renderer to display received data
 function CloudXRManager.getLastReceivedData()
     return lastReceivedData
+end
+
+-- Capture the current frame for recording.
+-- Pass a drawCallback function that renders the scene.
+-- Called from lovr.draw(pass) in main.lua when recording is active.
+function CloudXRManager.captureFrame(drawCallback)
+    if recorderAvailable and Recorder.isActive() then
+        Recorder.captureFrame(drawCallback)
+    end
+end
+
+-- Returns true if currently recording.
+function CloudXRManager.isRecording()
+    return recorderAvailable and Recorder.isActive() or false
 end
 
 -- Clean up all CloudXR resources
