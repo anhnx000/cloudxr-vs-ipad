@@ -29,9 +29,21 @@ private enum RecordingState {
     case recording   // Server confirmed recording is active
 }
 
+private enum RecordCommandFallback {
+    case start
+    case stop
+}
+
+private struct RecordFallbackResponse: Decodable {
+    let ok: Bool
+    let status: String?
+    let message: String?
+}
+
 struct ServerActionsView: View {
     static var logger = Logger()
     @Environment(AppModel.self) var appModel
+    @AppStorage("hostAddress") private var hostAddress: String = ""
 
     @State var lastMessageSent: String = ""
     @State var lastMessageReceived: String = ""
@@ -49,6 +61,12 @@ struct ServerActionsView: View {
     
     private var isCurrentChannelReady: Bool {
         currentChannel?.status == .ready
+    }
+
+    private var fallbackRecordBaseURL: URL? {
+        let trimmed = hostAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return URL(string: "http://\(trimmed):49080")
     }
 
     @discardableResult
@@ -134,6 +152,52 @@ struct ServerActionsView: View {
         }
     }
 
+    @MainActor
+    private func sendFallbackRecordCommand(_ command: RecordCommandFallback) async {
+        guard let baseURL = fallbackRecordBaseURL else {
+            lastMessageReceived = "Không thể fallback record: chưa có IP server (Manual IP)."
+            return
+        }
+
+        let endpoint = command == .start ? "/record/start" : "/record/stop"
+        guard let url = URL(string: endpoint, relativeTo: baseURL) else {
+            lastMessageReceived = "Không thể fallback record: URL không hợp lệ."
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 8
+        request.httpBody = Data("{}".utf8)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                lastMessageReceived = "Fallback record failed: invalid HTTP response."
+                return
+            }
+
+            let decoded = try? JSONDecoder().decode(RecordFallbackResponse.self, from: data)
+            if (200..<300).contains(http.statusCode), decoded?.ok == true {
+                if decoded?.status == "recording" {
+                    recordingState = .recording
+                } else {
+                    recordingState = .idle
+                }
+                pendingTimeoutTask?.cancel()
+                lastMessageReceived = decoded?.message ?? "Fallback record command succeeded."
+            } else {
+                recordingState = .idle
+                let msg = decoded?.message ?? "HTTP \(http.statusCode)"
+                lastMessageReceived = "Fallback record failed: \(msg)"
+            }
+        } catch {
+            recordingState = .idle
+            lastMessageReceived = "Fallback record error: \(error.localizedDescription)"
+        }
+    }
+
     private func startReaderTask(for channel: MessageChannel) {
         channelReaderTask?.cancel()
         channelReaderTask = Task {
@@ -156,6 +220,10 @@ struct ServerActionsView: View {
                     recordingState = .pending
                     startPendingTimeout()
                     lastMessageReceived = "Đã gửi lệnh bắt đầu ghi hình, chờ phản hồi từ server..."
+                } else {
+                    Task { @MainActor in
+                        await sendFallbackRecordCommand(.start)
+                    }
                 }
             }) {
                 Label("Record", systemImage: "record.circle.fill")
@@ -186,6 +254,10 @@ struct ServerActionsView: View {
                 if sendMessage(message: "cmd:record_stop") {
                     recordingState = .pending
                     startPendingTimeout()
+                } else {
+                    Task { @MainActor in
+                        await sendFallbackRecordCommand(.stop)
+                    }
                 }
             }) {
                 Label("Stop Recording", systemImage: "stop.fill")
