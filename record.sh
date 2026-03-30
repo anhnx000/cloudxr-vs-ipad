@@ -9,7 +9,6 @@ set -euo pipefail
 
 RECORDINGS_DIR="$HOME/work/cloudxr-vs-ipad/recordings"
 PID_FILE="/tmp/uxplay_record.pid"
-PIPELINE_PID_FILE="/tmp/gst_record.pid"
 UXPLAY_PID_FILE="/tmp/uxplay_preview.pid"
 
 mkdir -p "$RECORDINGS_DIR"
@@ -44,13 +43,15 @@ start_recording() {
     echo "Starting AirPlay receiver with recording pipeline..."
     echo "Output: $output"
 
-    # GStreamer pipeline:
-    #   appsrc (AirPlay video) → h264parse → avdec_h264 → videoconvert
-    #     → tee → branch 1: ximagesink (preview on screen)
-    #           → branch 2: x264enc → mp4mux → filesink (save file)
-    GST_VIDEO_PIPELINE="appsrc name=video_source ! queue ! h264parse ! avdec_h264 ! videoconvert ! tee name=t \
+    # GStreamer pipeline passed to uxplay via -vs:
+    #   uxplay decodes H.264 (via -vp h264parse + -vd avdec_h264) then sends
+    #   raw frames into the -vs sink. We use tee to split:
+    #     branch 1 → ximagesink  (live preview on screen)
+    #     branch 2 → x264enc → mp4mux → filesink  (save to file)
+    local vs_pipeline
+    vs_pipeline="tee name=t \
 t. ! queue ! ximagesink sync=false \
-t. ! queue ! x264enc tune=zerolatency ! mp4mux ! filesink location=\"$output\""
+t. ! queue ! videoconvert ! x264enc tune=zerolatency ! mp4mux ! filesink location=${output}"
 
     uxplay \
         -n "$airplay_name" \
@@ -60,8 +61,7 @@ t. ! queue ! x264enc tune=zerolatency ! mp4mux ! filesink location=\"$output\""
         -avdec \
         -vp h264parse \
         -vd avdec_h264 \
-        -vs "ximagesink" \
-        -a \
+        -vs "$vs_pipeline" \
         -vsync no \
         -fps 30 &
 
