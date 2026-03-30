@@ -22,35 +22,41 @@ import SwiftUI
 import CloudXRKit
 import os.log
 
+// Three distinct recording states shown to the user.
+private enum RecordingState {
+    case idle        // Ready to record
+    case pending     // Command sent, waiting for server confirmation
+    case recording   // Server confirmed recording is active
+}
+
 struct ServerActionsView: View {
     static var logger = Logger()
-    // Messages are sent via MessageChannel of the session in appModel.
     @Environment(AppModel.self) var appModel
 
     @State var lastMessageSent: String = ""
     @State var lastMessageReceived: String = ""
-    @State private var isRecording: Bool = false
+    @State private var recordingState: RecordingState = .idle
+
+    // Pulsing animation for the red dot while recording.
+    @State private var dotPulse: Bool = false
 
     @Binding var currentChannelSelection: ChannelInfo?
     @Binding var currentChannel: MessageChannel?
 
-    // Reader task for the currently selected channel.
     @State private var channelReaderTask: Task<Void, Never>?
     @State private var receivedMessageCount: Int = 0
 
     func sendMessage(message: String) {
-        guard let channelSelection = currentChannelSelection else {
+        guard currentChannelSelection != nil else {
             Self.logger.warning("No channel selected")
             lastMessageSent = "Error - no channel"
             return
         }
-
         guard let messageData = message.data(using: .utf8) else {
             Self.logger.warning("String message could not be converted to data")
             lastMessageSent = "Error"
             return
         }
-
         if let channel = currentChannel {
             if channel.sendServerMessage(messageData) {
                 lastMessageSent = message
@@ -64,13 +70,126 @@ struct ServerActionsView: View {
         }
     }
 
+    private func handleServerMessage(_ text: String) {
+        receivedMessageCount += 1
+        lastMessageReceived = "Message \(receivedMessageCount): " + text
+        switch text {
+        case "status:recording_started":
+            recordingState = .recording
+        case "status:recording_stopped":
+            recordingState = .idle
+        case "status:already_recording":
+            recordingState = .recording
+        case "status:not_recording":
+            recordingState = .idle
+        default:
+            break
+        }
+    }
+
+    private func startReaderTask(for channel: MessageChannel) {
+        channelReaderTask?.cancel()
+        channelReaderTask = Task {
+            for await message in channel.receivedMessageStream {
+                let text = String(decoding: message, as: UTF8.self)
+                await MainActor.run { handleServerMessage(text) }
+            }
+        }
+    }
+
+    // MARK: - Recording button
+
+    @ViewBuilder
+    private var recordingButton: some View {
+        switch recordingState {
+        case .idle:
+            Button(action: {
+                sendMessage(message: "cmd:record_start")
+                recordingState = .pending
+            }) {
+                Label("Record", systemImage: "record.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 12)
+                    .background(Color.red)
+                    .clipShape(Capsule())
+            }
+            .disabled(currentChannelSelection == nil)
+
+        case .pending:
+            HStack(spacing: 8) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .orange))
+                    .scaleEffect(0.85)
+                Text("Starting…")
+                    .font(.headline)
+                    .foregroundColor(.orange)
+            }
+            .padding(.horizontal, 28)
+            .padding(.vertical, 12)
+            .background(Color.orange.opacity(0.15))
+            .clipShape(Capsule())
+
+        case .recording:
+            Button(action: {
+                sendMessage(message: "cmd:record_stop")
+                recordingState = .pending
+            }) {
+                Label("Stop Recording", systemImage: "stop.fill")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 12)
+                    .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                    .clipShape(Capsule())
+            }
+            .disabled(currentChannelSelection == nil)
+        }
+    }
+
+    // MARK: - Recording status banner
+
+    @ViewBuilder
+    private var recordingStatusBanner: some View {
+        if recordingState == .recording {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 10, height: 10)
+                    .scaleEffect(dotPulse ? 1.4 : 1.0)
+                    .animation(
+                        .easeInOut(duration: 0.6).repeatForever(autoreverses: true),
+                        value: dotPulse
+                    )
+                    .onAppear { dotPulse = true }
+                    .onDisappear { dotPulse = false }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("REC")
+                        .font(.caption.bold())
+                        .foregroundColor(.red)
+                    Text("Saving to: ~/recordings/record_<timestamp>.mp4")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(Color.red.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    // MARK: - Body
+
     var body: some View {
         Form {
-            VStack {
+            VStack(spacing: 0) {
                 if let session = appModel.session {
                     Picker("Channels", selection: $currentChannelSelection) {
                         ForEach(session.availableMessageChannels, id: \.self) { channelInfo in
-                            Text("Channel [\(channelInfo.uuid.map { String($0) }.joined(separator: ","))]").tag(channelInfo as ChannelInfo?)
+                            Text("Channel [\(channelInfo.uuid.map { String($0) }.joined(separator: ","))]")
+                                .tag(channelInfo as ChannelInfo?)
                         }
                         Text("None").tag(nil as ChannelInfo?)
                     }
@@ -78,37 +197,16 @@ struct ServerActionsView: View {
                     .id(session.availableMessageChannels)
                     .onChange(of: currentChannelSelection) {
                         currentChannel = nil
-                        // Cancel any existing reader task when switching selection.
                         channelReaderTask?.cancel()
-
-                        guard let channelSelection = currentChannelSelection else {
-                            return
-                        }
-                        guard let channel = session.getMessageChannel(channelSelection) else {
-                            return
-                        }
-
-                        currentChannel = channel
-                        // Start a reader task for the selected channel.
-                        channelReaderTask = Task {
-                            for await message in channel.receivedMessageStream {
-                                receivedMessageCount += 1
-                                let text = String(decoding: message, as: UTF8.self)
-                                lastMessageReceived = "Message \(receivedMessageCount): " + text
-                                if text == "status:recording_started" {
-                                    isRecording = true
-                                } else if text == "status:recording_stopped" {
-                                    isRecording = false
-                                }
-                            }
-                        }
+                        guard let sel = currentChannelSelection,
+                              let ch = session.getMessageChannel(sel) else { return }
+                        currentChannel = ch
+                        startReaderTask(for: ch)
                     }
                     .onChange(of: session.availableMessageChannels) {
-                        if let channelSelection = currentChannelSelection,
-                           !session.availableMessageChannels.contains(channelSelection)
-                        {
+                        if let sel = currentChannelSelection,
+                           !session.availableMessageChannels.contains(sel) {
                             currentChannelSelection = nil
-                            // Cancel reader if selection disappears.
                             channelReaderTask?.cancel()
                             channelReaderTask = nil
                         }
@@ -116,106 +214,62 @@ struct ServerActionsView: View {
 
                     if let channel = currentChannel {
                         Text("Status: \(channel.status.rawValue)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     } else {
                         Text("Status: N/A")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
 
-                Divider()
+                Divider().padding(.vertical, 8)
 
-                VStack(spacing: 16) {
-                    HStack {
-                        Spacer()
-                        Button("Action 1") {
-                            sendMessage(message: "Action 1")
-                        }
+                HStack {
+                    Spacer()
+                    Button("Action 1") { sendMessage(message: "Action 1") }
                         .disabled(currentChannelSelection == nil)
                         .buttonStyle(.borderedProminent)
-                        Spacer()
-                        Button("Action 2") {
-                            sendMessage(message: "Action 2")
-                        }
+                    Spacer()
+                    Button("Action 2") { sendMessage(message: "Action 2") }
                         .disabled(currentChannelSelection == nil)
                         .buttonStyle(.borderedProminent)
-                        Spacer()
-                    }
-
-                    Divider()
-
-                    HStack(spacing: 24) {
-                        Spacer()
-                        if !isRecording {
-                            Button(action: {
-                                sendMessage(message: "cmd:record_start")
-                                isRecording = true
-                            }) {
-                                Label("Record", systemImage: "record.circle")
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 10)
-                                    .background(Color.red)
-                                    .cornerRadius(10)
-                            }
-                            .disabled(currentChannelSelection == nil)
-                        } else {
-                            Button(action: {
-                                sendMessage(message: "cmd:record_stop")
-                                isRecording = false
-                            }) {
-                                Label("Stop", systemImage: "stop.circle.fill")
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 10)
-                                    .background(Color.gray)
-                                    .cornerRadius(10)
-                            }
-                            .disabled(currentChannelSelection == nil)
-                        }
-                        Spacer()
-                    }
-                    
-                    if isRecording {
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 10, height: 10)
-                            Text("Recording...")
-                                .foregroundColor(.red)
-                                .font(.footnote.bold())
-                        }
-                    }
-                }
-                Divider()
-                VStack {
-                    Text("Last message sent: ")
-                    Divider()
-                    Text(lastMessageSent)
                     Spacer()
                 }
-                Divider()
-                VStack {
-                    Text("Last message received:")
-                    Divider()
-                    Text(lastMessageReceived)
-                    Spacer()
+                .padding(.vertical, 8)
+
+                Divider().padding(.vertical, 8)
+
+                // Record button + status banner
+                VStack(spacing: 12) {
+                    recordingButton
+                    recordingStatusBanner
                 }
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+
+                Divider().padding(.vertical, 8)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Last sent:").font(.caption).foregroundColor(.secondary)
+                    Text(lastMessageSent).font(.caption2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Last received:").font(.caption).foregroundColor(.secondary)
+                    Text(lastMessageReceived).font(.caption2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
             }
         }
         .onAppear {
             if let channel = currentChannel {
-                channelReaderTask?.cancel()
-                channelReaderTask = Task {
-                    for await message in channel.receivedMessageStream {
-                        receivedMessageCount += 1
-                        let text = String(decoding: message, as: UTF8.self)
-                        lastMessageReceived = "Message \(receivedMessageCount): " + text
-                        if text == "status:recording_started" {
-                            isRecording = true
-                        } else if text == "status:recording_stopped" {
-                            isRecording = false
-                        }
-                    }
-                }
+                startReaderTask(for: channel)
             }
         }
         .onDisappear {
