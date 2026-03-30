@@ -1,150 +1,142 @@
--- recorder.lua
--- Capture rendered frames from the LOVR render loop and pipe them to GStreamer
--- for encoding to MP4, without requiring an X11 display.
+-- recorder.lua  (LOVR 0.18.0 compatible)
+-- Capture rendered frames from the LOVR draw loop and encode to MP4 via
+-- GStreamer NVENC. No X11 display required.
 --
--- How it works:
---   1. On record_start: open a named pipe (/tmp/lovr_frames) and launch
---      a GStreamer pipeline that reads raw RGB frames from that pipe,
---      encodes with NVENC (or x264), and muxes into MP4.
---   2. Every draw frame: render the scene to an off-screen Canvas, read
---      back the raw pixels, and write them into the pipe.
---   3. On record_stop: close the pipe so GStreamer finishes the file.
+-- Flow:
+--   Recorder.start()  → create named pipe + launch gst-launch-1.0 pipeline
+--   Recorder.captureFrame(pass, drawFn)  → render to off-screen texture,
+--                                           read back pixels, write to pipe
+--   Recorder.stop()   → close pipe, GStreamer finalizes the MP4
 
 local Recorder = {}
 
-local isRecording = false
-local pipe = nil           -- File handle for the named pipe
-local frameWidth  = 1280
-local frameHeight = 720
-local pipeFile = "/tmp/lovr_frames"
-local gstPid = nil
+local isRecording  = false
+local pipe         = nil      -- Lua file handle to the named pipe
+local captureTexture = nil    -- off-screen LOVR Texture (render target)
+local frameWidth   = 1280
+local frameHeight  = 720
+local pipeFile     = "/tmp/lovr_frames"
 
-local function getRecordingsDir()
-    local home = os.getenv("HOME") or "/tmp"
-    return home .. "/work/cloudxr-vs-ipad/recordings"
+Recorder.outputFile = nil
+
+-- ── helpers ──────────────────────────────────────────────────────────────────
+
+local function recordingsDir()
+    return (os.getenv("HOME") or "/tmp") .. "/work/cloudxr-vs-ipad/recordings"
 end
 
-local function buildGstCmd(outputFile)
-    local w, h = frameWidth, frameHeight
-    local encoder = "x264enc tune=zerolatency"
-
-    -- Prefer NVIDIA hardware encoder if available.
-    local probe = io.popen("gst-inspect-1.0 nvh264enc 2>/dev/null | head -1")
-    if probe then
-        local line = probe:read("*l")
-        probe:close()
-        if line and line ~= "" then
-            encoder = "nvh264enc"
-        end
+local function probeEncoder()
+    local h = io.popen("gst-inspect-1.0 nvh264enc 2>/dev/null | head -1")
+    if h then
+        local line = h:read("*l"); h:close()
+        if line and line ~= "" then return "nvh264enc" end
     end
+    return "x264enc tune=zerolatency"
+end
 
-    -- GStreamer pipeline: read raw RGB24 frames from named pipe → encode → MP4
+local function buildGstCmd(output)
+    local enc = probeEncoder()
+    -- fdsrc reads from stdin (fd=0), which is the named pipe via shell redirection.
+    -- rawvideoparse: width/height match frameWidth/frameHeight, format=rgba (4 bytes/px)
     return string.format(
-        "gst-launch-1.0 -q fdsrc fd=0 " ..
-        "! rawvideoparse width=%d height=%d format=rgbx framerate=30/1 " ..
-        "! videoconvert ! %s ! h264parse ! mp4mux ! filesink location=%s",
-        w, h, encoder, outputFile
+        "gst-launch-1.0 -q "
+     .. "fdsrc fd=0 "
+     .. "! rawvideoparse width=%d height=%d format=rgba framerate=30/1 "
+     .. "! videoconvert ! %s ! h264parse ! mp4mux "
+     .. "! filesink location=%s",
+        frameWidth, frameHeight, enc, output
     )
 end
 
--- Start recording to the given output file path.
--- Called from cloudxr_manager.lua when cmd:record_start is received.
+-- ── public API ───────────────────────────────────────────────────────────────
+
 function Recorder.start(outputFile)
-    if isRecording then
-        return false, "already recording"
-    end
+    if isRecording then return false, "already recording" end
 
-    local dir = getRecordingsDir()
-    os.execute("mkdir -p " .. dir)
-
+    os.execute("mkdir -p " .. recordingsDir())
     if not outputFile or outputFile == "" then
-        outputFile = dir .. "/record_" ..
-            os.date("%Y%m%d_%H%M%S") .. ".mp4"
+        outputFile = recordingsDir() .. "/record_" .. os.date("%Y%m%d_%H%M%S") .. ".mp4"
     end
 
     -- Create named pipe.
     os.execute("rm -f " .. pipeFile)
-    local ok = os.execute("mkfifo " .. pipeFile)
-    if not ok then
-        return false, "failed to create named pipe " .. pipeFile
+    if not os.execute("mkfifo " .. pipeFile) then
+        return false, "mkfifo failed: " .. pipeFile
     end
 
-    -- Launch GStreamer reading from the named pipe in the background.
-    local gstCmd = buildGstCmd(outputFile) ..
-        " < " .. pipeFile .. " &"
-    os.execute(gstCmd)
+    -- Launch GStreamer reading from named pipe in background.
+    -- Shell redirect "< pipeFile" maps pipeFile → fd=0 for gst-launch.
+    os.execute(buildGstCmd(outputFile) .. " < " .. pipeFile .. " &")
 
-    -- Small delay so GStreamer opens the pipe before LOVR writes to it.
-    -- lovr.timer.sleep is available if this file is loaded inside LOVR.
-    if lovr and lovr.timer then
-        lovr.timer.sleep(0.3)
-    end
+    -- Brief pause so GStreamer opens the read end before Lua opens write end.
+    if lovr and lovr.timer then lovr.timer.sleep(0.3) end
 
-    -- Open the pipe for writing raw frame data.
     pipe = io.open(pipeFile, "wb")
-    if not pipe then
-        return false, "failed to open named pipe for writing"
+    if not pipe then return false, "cannot open pipe for writing" end
+
+    -- Allocate the off-screen render texture once (LOVR 0.18 API).
+    -- usage 'render' → can be used as a render target
+    -- usage 'transfer' → allows CPU readback via :newReadback()
+    if not captureTexture then
+        captureTexture = lovr.graphics.newTexture(frameWidth, frameHeight, {
+            usage    = { "render", "transfer" },
+            mipmaps  = false,
+            format   = "rgba8",
+        })
     end
 
-    isRecording = true
+    isRecording      = true
     Recorder.outputFile = outputFile
     print("[Recorder] Started → " .. outputFile)
     return true, outputFile
 end
 
--- Stop recording. Close the pipe so GStreamer finalizes the MP4.
 function Recorder.stop()
-    if not isRecording then
-        return false, "not recording"
-    end
+    if not isRecording then return false, "not recording" end
 
-    if pipe then
-        pipe:close()
-        pipe = nil
-    end
-
+    if pipe then pipe:close(); pipe = nil end
     isRecording = false
+
     local saved = Recorder.outputFile or ""
     Recorder.outputFile = nil
     print("[Recorder] Stopped → " .. saved)
 
-    -- Give GStreamer a moment to flush and close the file.
-    os.execute("sleep 1")
-
+    os.execute("sleep 1")   -- let GStreamer flush and close the file
     return true, saved
 end
 
--- Returns true if currently recording.
 function Recorder.isActive()
     return isRecording
 end
 
--- Called from lovr.draw(pass) every frame while recording.
--- Renders the scene to an off-screen canvas and writes raw pixels to the pipe.
-function Recorder.captureFrame(drawCallback)
-    if not isRecording or not pipe then return end
+-- Called from main.lua inside lovr.draw() every frame while recording.
+--
+-- @param drawFn  function(pass) — draws the scene into the provided Pass.
+--                Caller supplies the same rendering calls used for the main pass.
+function Recorder.captureFrame(drawFn)
+    if not isRecording or not pipe or not captureTexture then return end
 
-    -- Lazy-create the off-screen canvas at the configured resolution.
-    if not Recorder._canvas then
-        Recorder._canvas = lovr.graphics.newCanvas(frameWidth, frameHeight, {
-            format = "rgba8",
-            depth  = true,
-        })
+    -- 1. Create a new render Pass targeting our off-screen texture (LOVR 0.18).
+    local capturePass = lovr.graphics.newPass(captureTexture)
+
+    -- 2. Let the caller draw the scene into the capture pass.
+    if drawFn then
+        drawFn(capturePass)
     end
 
-    -- Render the scene into the off-screen canvas.
-    Recorder._canvas:renderTo(function()
-        if drawCallback then
-            drawCallback()
-        end
-    end)
+    -- 3. Submit the capture pass to the GPU queue.
+    lovr.graphics.submit(capturePass)
 
-    -- Read the canvas pixels back to CPU (returns a TextureData / Blob).
-    local imageData = Recorder._canvas:newImageData()
-    if imageData then
-        -- Write raw pixel bytes (RGBA8, 4 bytes per pixel) to the pipe.
-        -- GStreamer rawvideoparse expects "rgbx" which is RGBA8 packed.
-        local blob = imageData:getBlob()
+    -- 4. Read the texture back to CPU synchronously.
+    --    readback:wait() stalls until GPU finishes — acceptable for recording.
+    local readback = captureTexture:newReadback()
+    readback:wait()
+
+    -- 5. Get raw pixel bytes from the readback image and write to the pipe.
+    --    GStreamer rawvideoparse expects RGBA8, 4 bytes/pixel, row-major.
+    local image = readback:getImage()
+    if image then
+        local blob = image:getBlob()
         pipe:write(blob:getString())
         pipe:flush()
     end

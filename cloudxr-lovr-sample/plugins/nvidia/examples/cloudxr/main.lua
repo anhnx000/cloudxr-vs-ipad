@@ -134,16 +134,13 @@ function lovr.draw(pass)
     pass:setColor(1, 1, 1, 1)
 
     -- If recording is active, capture this frame into the GStreamer pipe.
-    -- This runs every frame without X11, writing raw pixels to a named pipe
-    -- that GStreamer reads and encodes to MP4 via NVENC.
+    -- Recorder.captureFrame creates its own off-screen Pass and calls
+    -- the drawFn with that pass — no X11 or window required.
     if CloudXRManager and CloudXRManager.isRecording() then
-        CloudXRManager.captureFrame(function()
-            local p = lovr.graphics.getWindowPass()
-            if p then
-                Renderer.drawHandJoints(p, lastReceivedData)
-                Renderer.drawControllers(p, models)
-                Renderer.drawOpaqueData(p, lastReceivedData, cameraStatusText)
-            end
+        CloudXRManager.captureFrame(function(capturePass)
+            Renderer.drawOpaqueData(capturePass, lastReceivedData, cameraStatusText)
+            Renderer.drawHandJoints(capturePass, lastReceivedData)
+            Renderer.drawControllers(capturePass, models)
         end)
     end
 end
