@@ -13,6 +13,7 @@ local Recorder = {}
 local isRecording  = false
 local pipe         = nil      -- Lua file handle to the named pipe
 local captureTexture = nil    -- off-screen LOVR Texture (render target)
+local capturedFrames = 0
 local frameWidth   = 1280
 local frameHeight  = 720
 local pipeFile     = "/tmp/lovr_frames"
@@ -48,12 +49,39 @@ local function buildGstCmd(output)
     )
 end
 
+local function ensureGraphicsReady()
+    if lovr and lovr.graphics and lovr.graphics.newTexture then
+        return true
+    end
+    if not lovr then
+        return false, "lovr runtime is not available"
+    end
+
+    local ok, graphics = pcall(require, "lovr.graphics")
+    if not ok or type(graphics) ~= "table" then
+        return false, "failed to load lovr.graphics module"
+    end
+
+    lovr.graphics = graphics
+    if lovr.graphics.initialize then
+        pcall(function()
+            lovr.graphics.initialize()
+        end)
+    end
+
+    if not lovr.graphics.newTexture then
+        return false, "graphics module does not expose texture API"
+    end
+    return true
+end
+
 -- ── public API ───────────────────────────────────────────────────────────────
 
 function Recorder.start(outputFile)
     if isRecording then return false, "already recording" end
-    if not lovr or not lovr.graphics or not lovr.graphics.newTexture then
-        return false, "graphics module is not initialized"
+    local graphicsOk, graphicsErr = ensureGraphicsReady()
+    if not graphicsOk then
+        return false, graphicsErr or "graphics module is not initialized"
     end
 
     os.execute("mkdir -p " .. recordingsDir())
@@ -89,6 +117,7 @@ function Recorder.start(outputFile)
     end
 
     isRecording      = true
+    capturedFrames   = 0
     Recorder.outputFile = outputFile
     print("[Recorder] Started → " .. outputFile)
     return true, outputFile
@@ -102,9 +131,19 @@ function Recorder.stop()
 
     local saved = Recorder.outputFile or ""
     Recorder.outputFile = nil
-    print("[Recorder] Stopped → " .. saved)
+    local frameCount = capturedFrames
+    capturedFrames = 0
 
     os.execute("sleep 1")   -- let GStreamer flush and close the file
+
+    if frameCount <= 0 then
+        if saved ~= "" then
+            os.execute("rm -f " .. saved)
+        end
+        return false, "no frames captured"
+    end
+
+    print(string.format("[Recorder] Stopped → %s (%d frames)", saved, frameCount))
     return true, saved
 end
 
@@ -140,8 +179,12 @@ function Recorder.captureFrame(drawFn)
     local image = readback:getImage()
     if image then
         local blob = image:getBlob()
-        pipe:write(blob:getString())
+        local bytes = blob:getString()
+        pipe:write(bytes)
         pipe:flush()
+        if #bytes > 0 then
+            capturedFrames = capturedFrames + 1
+        end
     end
 end
 

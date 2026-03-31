@@ -9,6 +9,7 @@
 # =============================================================================
 
 set -e
+set -o pipefail
 
 # Colors
 RED='\033[0;31m'
@@ -36,6 +37,19 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+SESSION_TS="$(date +%Y%m%d_%H%M%S)"
+LOG_ROOT="${CXR_LOG_DIR:-$(pwd)/logs/server}"
+mkdir -p "$LOG_ROOT"
+SESSION_LOG_DIR="$LOG_ROOT/$SESSION_TS"
+mkdir -p "$SESSION_LOG_DIR"
+LATEST_LOG_DIR="$LOG_ROOT/latest"
+rm -rf "$LATEST_LOG_DIR"
+ln -s "$SESSION_LOG_DIR" "$LATEST_LOG_DIR"
+
+RUN_LOG_FILE="$SESSION_LOG_DIR/run.log"
+LOVR_LOG_FILE="$SESSION_LOG_DIR/lovr.log"
+exec > >(tee -a "$RUN_LOG_FILE") 2>&1
 
 # Check if build/src exists
 if [ ! -d "build/src" ]; then
@@ -122,14 +136,14 @@ export XR_RUNTIME_JSON="$RUNTIME_JSON"
 
 # Optional fallback record API for iPad flow (independent from OpenXR/headset).
 RECORD_API_PID_FILE="/tmp/cloudxr_record_api.pid"
-RECORD_API_LOG_FILE="/tmp/cloudxr_record_api.log"
+RECORD_API_LOG_FILE="$SESSION_LOG_DIR/record_api.log"
 RECORD_API_SCRIPT="$(pwd)/tools/record_control_api.py"
 
 if command -v python3 >/dev/null 2>&1 && [ -f "$RECORD_API_SCRIPT" ]; then
     if [ -f "$RECORD_API_PID_FILE" ] && kill -0 "$(cat "$RECORD_API_PID_FILE")" 2>/dev/null; then
         echo -e "${YELLOW}Record control API already running (PID: $(cat "$RECORD_API_PID_FILE")).${NC}"
     else
-        nohup python3 "$RECORD_API_SCRIPT" --host 0.0.0.0 --port 49080 > "$RECORD_API_LOG_FILE" 2>&1 &
+        nohup python3 "$RECORD_API_SCRIPT" --host 0.0.0.0 --port 49080 --log-file "$RECORD_API_LOG_FILE" >> "$RUN_LOG_FILE" 2>&1 &
         echo "$!" > "$RECORD_API_PID_FILE"
         echo -e "${GREEN}Record control API started on :49080 (PID: $!).${NC}"
     fi
@@ -146,11 +160,14 @@ if [ -n "$DEVICE_PROFILE" ]; then
 fi
 echo -e "${YELLOW}XR Runtime JSON: $XR_RUNTIME_JSON${NC}"
 echo -e "${GREEN}Starting LOVR...${NC}"
+echo -e "${YELLOW}Log session dir: $SESSION_LOG_DIR${NC}"
+echo -e "${YELLOW}LOVR log: $LOVR_LOG_FILE${NC}"
+echo -e "${YELLOW}Record API log: $RECORD_API_LOG_FILE${NC}"
 echo ""
 
 cd "$(dirname "$LOVR_BIN")"
 EXAMPLE_REL_PATH="$(realpath --relative-to="$(pwd)" "$EXAMPLE_ABS_PATH")"
-"./$(basename "$LOVR_BIN")" "$EXAMPLE_REL_PATH" $DEVICE_PROFILE
+"./$(basename "$LOVR_BIN")" "$EXAMPLE_REL_PATH" $DEVICE_PROFILE 2>&1 | tee -a "$LOVR_LOG_FILE"
 
 echo ""
 echo -e "${GREEN}✓ LOVR exited${NC}"

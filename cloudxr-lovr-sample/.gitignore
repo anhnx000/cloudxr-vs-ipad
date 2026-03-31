@@ -12,3 +12,7 @@ plugins/nvidia/lib/windows-x86_64/*
 !plugins/nvidia/lib/windows-x86_64/README.md
 plugins/nvidia/include/*
 !plugins/nvidia/include/README.md
+
+# Runtime logs and Python cache
+logs/
+tools/__pycache__/

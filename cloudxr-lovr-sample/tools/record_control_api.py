@@ -10,14 +10,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import shutil
 import subprocess
+import sys
 import threading
 import time
+import uuid
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict
+
+
+LOG = logging.getLogger("cloudxr.record_api")
 
 
 def _repo_root() -> Path:
@@ -77,25 +83,37 @@ def _read_status_payload() -> Dict[str, Any]:
         "status": values.get("status", "unknown"),
         "source": values.get("source", "unknown"),
         "output": values.get("output", ""),
+        "req": values.get("req", ""),
         "message": values.get("message", ""),
         "raw": status_path.read_text(encoding="utf-8", errors="ignore"),
         "ts": values.get("ts", "0"),
     }
 
 
-def _write_command(command: str, source: str, output: str) -> None:
-    payload = f"{command}|source={source}|output={output}"
+def _write_command(command: str, source: str, output: str, request_id: str) -> None:
+    payload = f"{command}|source={source}|output={output}|req={request_id}"
     _command_file().write_text(payload, encoding="utf-8")
 
 
-def _wait_for_status_change(prev_ts: str, timeout_sec: float = 4.0) -> Dict[str, Any]:
+def _wait_for_status_change(prev_ts: str, request_id: str, timeout_sec: float = 4.0) -> Dict[str, Any]:
     deadline = time.time() + timeout_sec
     while time.time() < deadline:
         status = _read_status_payload()
-        if status.get("ts") != prev_ts and status.get("ts") != "0":
+        if (
+            status.get("ts") != prev_ts
+            and status.get("ts") != "0"
+            and status.get("req") == request_id
+        ):
             return status
         time.sleep(0.12)
-    return _read_status_payload()
+    payload = _read_status_payload()
+    LOG.warning(
+        "Timeout waiting recorder status change request_id=%s prev_ts=%s last_ts=%s",
+        request_id,
+        prev_ts,
+        payload.get("ts"),
+    )
+    return payload
 
 
 def _default_output_for_source(source: str) -> str:
@@ -313,22 +331,40 @@ class Handler(BaseHTTPRequestHandler):
                 source = "ipad"
             if not output:
                 output = _default_output_for_source(source)
+            request_id = f"api_{uuid.uuid4().hex}"
+            LOG.info("record.start request_id=%s source=%s output=%s", request_id, source, output)
             prev = _read_status_payload()
-            _write_command("start", source, output)
-            payload = _wait_for_status_change(str(prev.get("ts", "0")))
+            _write_command("start", source, output, request_id)
+            payload = _wait_for_status_change(str(prev.get("ts", "0")), request_id)
             if payload.get("status") == "recording":
+                LOG.info("record.start ok request_id=%s status=%s", request_id, payload.get("status"))
                 self._send_json(200, payload)
             else:
+                LOG.error(
+                    "record.start failed request_id=%s status=%s message=%s",
+                    request_id,
+                    payload.get("status"),
+                    payload.get("message"),
+                )
                 self._send_json(500, payload)
             return
 
         if self.path == "/record/stop":
+            request_id = f"api_{uuid.uuid4().hex}"
+            LOG.info("record.stop request_id=%s", request_id)
             prev = _read_status_payload()
-            _write_command("stop", "ipad", "")
-            payload = _wait_for_status_change(str(prev.get("ts", "0")))
+            _write_command("stop", "ipad", "", request_id)
+            payload = _wait_for_status_change(str(prev.get("ts", "0")), request_id)
             if payload.get("status") in {"idle", "not_recording"}:
+                LOG.info("record.stop ok request_id=%s status=%s", request_id, payload.get("status"))
                 self._send_json(200, payload)
             else:
+                LOG.error(
+                    "record.stop failed request_id=%s status=%s message=%s",
+                    request_id,
+                    payload.get("status"),
+                    payload.get("message"),
+                )
                 self._send_json(500, payload)
             return
 
@@ -336,7 +372,15 @@ class Handler(BaseHTTPRequestHandler):
             body = self._parse_json_body()
             fps = int(body.get("fps", 10)) if isinstance(body.get("fps"), int) else 10
             output = body.get("output") if isinstance(body.get("output"), str) else ""
-            self._send_json(200, _camera_start(fps=fps, output=output))
+            payload = _camera_start(fps=fps, output=output)
+            LOG.info(
+                "camera.start active=%s fps=%s session_id=%s output=%s",
+                payload.get("active"),
+                payload.get("fps"),
+                payload.get("session_id"),
+                payload.get("output"),
+            )
+            self._send_json(200, payload)
             return
 
         if self.path == "/camera/frame":
@@ -346,38 +390,74 @@ class Handler(BaseHTTPRequestHandler):
                 return
             frame = self.rfile.read(length)
             result = _camera_add_frame(frame)
+            if not result.get("ok"):
+                LOG.warning("camera.frame rejected message=%s", result.get("message"))
             self._send_json(200 if result.get("ok") else 400, result)
             return
 
         if self.path == "/camera/stop":
             payload = _camera_stop()
+            if payload.get("ok"):
+                LOG.info(
+                    "camera.stop ok session_id=%s frame_count=%s output=%s",
+                    payload.get("session_id"),
+                    payload.get("frame_count"),
+                    payload.get("output"),
+                )
+            else:
+                LOG.error("camera.stop failed message=%s output=%s", payload.get("message"), payload.get("output"))
             self._send_json(200 if payload.get("ok") else 500, payload)
             return
 
         self._send_json(404, {"ok": False, "error": "not_found"})
 
     def log_message(self, fmt: str, *args: Any) -> None:
-        # Keep logs concise for long-running service.
-        print(f"[record-api] {self.address_string()} - {fmt % args}")
+        LOG.info("%s - %s", self.address_string(), fmt % args)
+
+
+def _configure_logging(log_file: str) -> None:
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)s [record-api] %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S%z",
+    )
+
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    root.handlers.clear()
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    root.addHandler(stream_handler)
+
+    if log_file:
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        file_handler.setFormatter(formatter)
+        root.addHandler(file_handler)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=49080)
+    parser.add_argument("--log-file", default="")
     args = parser.parse_args()
 
+    _configure_logging(args.log_file)
     _load_camera_state()
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"Record control API listening on {args.host}:{args.port}")
-    print(f"Command file: {_command_file()}")
-    print(f"Status file: {_status_file()}")
+    LOG.info("Record control API listening on %s:%s", args.host, args.port)
+    LOG.info("Command file: %s", _command_file())
+    LOG.info("Status file: %s", _status_file())
+    if args.log_file:
+        LOG.info("Log file: %s", args.log_file)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        pass
+        LOG.info("Record control API interrupted by keyboard signal")
     finally:
         httpd.server_close()
+        LOG.info("Record control API closed")
     return 0
 
 
