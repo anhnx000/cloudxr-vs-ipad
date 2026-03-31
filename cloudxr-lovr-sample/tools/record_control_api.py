@@ -11,7 +11,9 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -57,6 +59,129 @@ CAMERA_STATE: Dict[str, Any] = {
     "fps": 10,
     "output": "",
 }
+
+
+# ── X11 screen-capture recording ─────────────────────────────────────────
+# Replaces the Lua GPU-readback recorder.  When the CloudXR runtime is
+# active it holds GPU Vulkan sync objects; the Lua readback:wait() blocks
+# forever on drm_syncobj_array_wait_timeout.  GStreamer ximagesrc captures
+# the X11 display instead — zero GPU conflict with CloudXR streaming.
+
+_X11_RECORD_LOCK = threading.Lock()
+_X11_RECORD_PROC: "subprocess.Popen[bytes] | None" = None
+_X11_RECORD_OUTPUT: str = ""
+_X11_RECORD_SOURCE: str = ""
+
+
+def _has_ximagesrc() -> bool:
+    r = subprocess.run(
+        ["gst-inspect-1.0", "ximagesrc"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return r.returncode == 0
+
+
+def _write_status_direct(
+    ok: bool,
+    status: str,
+    source: str,
+    output: str,
+    message: str,
+    request_id: str,
+) -> None:
+    ts = str(int(time.time()))
+    lines = [
+        f"ok={'1' if ok else '0'}",
+        f"status={status}",
+        f"source={source}",
+        f"output={output}",
+        f"req={request_id}",
+        f"message={message.replace(chr(10), ' ')}",
+        f"ts={ts}",
+    ]
+    _status_file().write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _x11_record_start(output: str, source: str, request_id: str) -> Dict[str, Any]:
+    global _X11_RECORD_PROC, _X11_RECORD_OUTPUT, _X11_RECORD_SOURCE
+    with _X11_RECORD_LOCK:
+        if _X11_RECORD_PROC and _X11_RECORD_PROC.poll() is None:
+            _write_status_direct(True, "recording", source, _X11_RECORD_OUTPUT, "already recording", request_id)
+            return {"ok": True, "status": "recording", "message": "already recording", "output": _X11_RECORD_OUTPUT}
+
+        display = os.environ.get("DISPLAY", ":1")
+        encoder = _pick_gst_encoder()
+        if not encoder:
+            msg = "no H264 GStreamer encoder found"
+            _write_status_direct(False, "error", source, output, msg, request_id)
+            return {"ok": False, "status": "error", "message": msg, "output": output}
+
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        cmd = [
+            "gst-launch-1.0", "-e",
+            "ximagesrc", f"display-name={display}",
+            "!", "videoconvert",
+            "!", *encoder,
+            "!", "h264parse",
+            "!", "mp4mux",
+            "!", "filesink", f"location={output}",
+        ]
+        LOG.info("x11_record starting display=%s encoder=%s output=%s", display, encoder[0], output)
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            _X11_RECORD_PROC = proc
+            _X11_RECORD_OUTPUT = output
+            _X11_RECORD_SOURCE = source
+            _write_status_direct(True, "recording", source, output, "recording started", request_id)
+            return {"ok": True, "status": "recording", "output": output, "message": "recording started"}
+        except Exception as exc:
+            msg = f"failed to start gst-launch: {exc}"
+            _write_status_direct(False, "error", source, output, msg, request_id)
+            return {"ok": False, "status": "error", "message": msg, "output": output}
+
+
+def _x11_record_stop(source: str, request_id: str) -> Dict[str, Any]:
+    global _X11_RECORD_PROC, _X11_RECORD_OUTPUT, _X11_RECORD_SOURCE
+    with _X11_RECORD_LOCK:
+        proc = _X11_RECORD_PROC
+        output = _X11_RECORD_OUTPUT
+        if not proc or proc.poll() is not None:
+            _write_status_direct(True, "idle", source, output, "not recording", request_id)
+            return {"ok": True, "status": "idle", "message": "not recording", "output": output}
+
+        # SIGINT causes gst-launch to send EOS so the MP4 is properly finalized.
+        try:
+            proc.send_signal(signal.SIGINT)
+            proc.wait(timeout=12)
+        except subprocess.TimeoutExpired:
+            LOG.warning("gst-launch did not exit in time — killing")
+            proc.kill()
+            proc.wait()
+        except Exception as exc:
+            LOG.warning("error stopping gst-launch: %s", exc)
+
+        _X11_RECORD_PROC = None
+        stderr_tail = ""
+        try:
+            stderr_tail = (proc.stderr.read() or b"").decode(errors="replace")[-400:].strip()
+        except Exception:
+            pass
+
+        if Path(output).exists() and Path(output).stat().st_size > 1024:
+            msg = "recording stopped"
+            LOG.info("x11_record stopped output=%s", output)
+        else:
+            msg = f"recording stopped but output may be empty; gst stderr: {stderr_tail}"
+            LOG.warning("x11_record stop: %s", msg)
+
+        _write_status_direct(True, "idle", source, output, msg, request_id)
+        return {"ok": True, "status": "idle", "output": output, "message": msg}
 
 
 def _read_status_payload() -> Dict[str, Any]:
@@ -333,9 +458,8 @@ class Handler(BaseHTTPRequestHandler):
                 output = _default_output_for_source(source)
             request_id = f"api_{uuid.uuid4().hex}"
             LOG.info("record.start request_id=%s source=%s output=%s", request_id, source, output)
-            prev = _read_status_payload()
-            _write_command("start", source, output, request_id)
-            payload = _wait_for_status_change(str(prev.get("ts", "0")), request_id)
+            # Use X11 screen capture (ximagesrc) to avoid GPU deadlock with CloudXR.
+            payload = _x11_record_start(output, source, request_id)
             if payload.get("status") == "recording":
                 LOG.info("record.start ok request_id=%s status=%s", request_id, payload.get("status"))
                 self._send_json(200, payload)
@@ -352,20 +476,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/record/stop":
             request_id = f"api_{uuid.uuid4().hex}"
             LOG.info("record.stop request_id=%s", request_id)
-            prev = _read_status_payload()
-            _write_command("stop", "ipad", "", request_id)
-            payload = _wait_for_status_change(str(prev.get("ts", "0")), request_id)
-            if payload.get("status") in {"idle", "not_recording"}:
-                LOG.info("record.stop ok request_id=%s status=%s", request_id, payload.get("status"))
-                self._send_json(200, payload)
-            else:
-                LOG.error(
-                    "record.stop failed request_id=%s status=%s message=%s",
-                    request_id,
-                    payload.get("status"),
-                    payload.get("message"),
-                )
-                self._send_json(500, payload)
+            payload = _x11_record_stop("ipad", request_id)
+            LOG.info("record.stop ok request_id=%s status=%s output=%s", request_id, payload.get("status"), payload.get("output"))
+            self._send_json(200, payload)
             return
 
         if self.path == "/camera/start":

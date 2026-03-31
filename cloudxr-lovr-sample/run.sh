@@ -143,7 +143,7 @@ if command -v python3 >/dev/null 2>&1 && [ -f "$RECORD_API_SCRIPT" ]; then
     if [ -f "$RECORD_API_PID_FILE" ] && kill -0 "$(cat "$RECORD_API_PID_FILE")" 2>/dev/null; then
         echo -e "${YELLOW}Record control API already running (PID: $(cat "$RECORD_API_PID_FILE")).${NC}"
     else
-        nohup python3 "$RECORD_API_SCRIPT" --host 0.0.0.0 --port 49080 --log-file "$RECORD_API_LOG_FILE" >> "$RUN_LOG_FILE" 2>&1 &
+        DISPLAY="$DISPLAY" nohup python3 "$RECORD_API_SCRIPT" --host 0.0.0.0 --port 49080 --log-file "$RECORD_API_LOG_FILE" >> "$RUN_LOG_FILE" 2>&1 &
         echo "$!" > "$RECORD_API_PID_FILE"
         echo -e "${GREEN}Record control API started on :49080 (PID: $!).${NC}"
     fi
