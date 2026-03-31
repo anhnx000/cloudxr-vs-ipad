@@ -82,3 +82,39 @@ Khuyến nghị chạy mặc định (không set `CXR_DEVICE_PROFILE`) khi kết
 3. Kết nối lại với IP local.
 4. Thu log server tại thời điểm bấm `Connect` để đối chiếu profile/runtime.
 
+## 8) Lỗi thực tế đã gặp: `0x80b1004`
+
+Triệu chứng trên iPad:
+
+- Popup: `Connection attempt unsuccessful`
+- Error description: `The operation couldn't be completed. 0x80b1004`
+
+Phân tích:
+
+- Đây là nhánh `failedConnectionAttempt` trong `CloudXRViewer`.
+- Đã đối chiếu với test mạng thực tế:
+  - `ping 10.24.240.130` -> OK
+  - `nc -vzu -w 3 10.24.240.130 48010` -> UDP OK
+  - `nc -vz -w 3 10.24.240.130 48010` -> `Connection refused` (TCP fail)
+
+Kết luận:
+
+- Lỗi không nằm ở bước build app iPad.
+- Root cause là server chưa mở TCP listener ở cổng `48010` (hoặc process CloudXR/lovr chưa chạy đúng), nên client chuyển từ `Connecting` sang `Disconnected` ngay.
+
+Lệnh xác minh nhanh trên server Linux:
+
+```bash
+ss -lntup | grep 48010
+ps -ef | grep -E "lovr|cloudxr" | grep -v grep
+```
+
+Nếu chưa listen TCP `48010`:
+
+```bash
+cd ~/work/cloudxr-vs-ipad/cloudxr-lovr-sample
+pkill -f lovr || true
+sleep 1
+./run.sh
+```
+
