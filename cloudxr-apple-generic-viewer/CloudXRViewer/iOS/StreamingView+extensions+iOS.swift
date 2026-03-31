@@ -23,6 +23,7 @@ import SwiftUI
 import RealityKit
 import AVFoundation
 import CoreImage
+import ImageIO
 
 extension BasicStreamingView {
     private var configButtonImage: String {
@@ -209,7 +210,12 @@ final class IPadCameraStreamController: NSObject, AVCaptureVideoDataOutputSample
             }
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
             let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-            guard let jpegData = self.ciContext.jpegRepresentation(of: ciImage, colorSpace: CGColorSpaceCreateDeviceRGB(), options: [.lossyCompressionQuality: 0.65]) else { return }
+            let qualityKey = CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String)
+            guard let jpegData = self.ciContext.jpegRepresentation(
+                of: ciImage,
+                colorSpace: CGColorSpaceCreateDeviceRGB(),
+                options: [qualityKey: 0.65]
+            ) else { return }
             self.lastFrameTime = now
             self.isUploadingFrame = true
             await self.uploadFrame(jpegData)
