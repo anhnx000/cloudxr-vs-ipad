@@ -8,8 +8,7 @@
 # Convenience script to run the CloudXR example
 # =============================================================================
 
-set -e
-set -o pipefail
+set -eo pipefail
 
 # Colors
 RED='\033[0;31m'
@@ -100,14 +99,15 @@ fi
 
 RUNTIME_STARTED_FILE="$RUNTIME_DIR/runtime_started"
 if [ -f "$RUNTIME_STARTED_FILE" ]; then
-    echo -e "${YELLOW}⚠️  CloudXR Runtime service file exists: $RUNTIME_STARTED_FILE${NC}"
-    echo -e "${YELLOW}This indicates CloudXR Runtime service is running or a previous instance of the runtime did not exit gracefully.${NC}"
-    echo ""
-    echo -e "${YELLOW}If no other instances of CloudXR Runtime are running, you can run:${NC}"
-    echo -e "${GREEN}  rm \"$RUNTIME_STARTED_FILE\"${NC}"
-    echo -e "${YELLOW}and try again.${NC}"
-    echo ""
-    exit 1
+    # Check if a lovr process is actually running; if not, the file is stale.
+    if pgrep -x lovr > /dev/null 2>&1; then
+        echo -e "${RED}❌ Another LOVR/CloudXR server appears to be running.${NC}"
+        echo -e "${YELLOW}Kill it first, then remove: $RUNTIME_STARTED_FILE${NC}"
+        exit 1
+    else
+        echo -e "${YELLOW}⚠️  Stale runtime lock found — removing: $RUNTIME_STARTED_FILE${NC}"
+        rm -f "$RUNTIME_STARTED_FILE"
+    fi
 fi
 
 # Set up CloudXR runtime environment
@@ -167,8 +167,80 @@ echo ""
 
 cd "$(dirname "$LOVR_BIN")"
 EXAMPLE_REL_PATH="$(realpath --relative-to="$(pwd)" "$EXAMPLE_ABS_PATH")"
-"./$(basename "$LOVR_BIN")" "$EXAMPLE_REL_PATH" $DEVICE_PROFILE 2>&1 | tee -a "$LOVR_LOG_FILE"
+
+# ── Stable virtual X display ──────────────────────────────────────────────
+# LÖVR uses GLFW which needs an X11 display to drive its event loop.
+# Using the real user Xorg (:1) is fragile — if the screen locks or the
+# GNOME session restarts, the X connection breaks and LÖVR crashes.
+# Instead we run a Xvfb (virtual framebuffer) on display :99.
+# Vulkan/CloudXR rendering still goes through the NVIDIA GPU directly
+# (via the Vulkan ICD), so off-screen rendering is hardware-accelerated.
+XVFB_DISP=":99"
+XVFB_PID_FILE="/tmp/cloudxr_xvfb.pid"
+XVFB_STARTED=0
+
+if command -v Xvfb >/dev/null 2>&1; then
+    if [ -f "$XVFB_PID_FILE" ] && kill -0 "$(cat "$XVFB_PID_FILE")" 2>/dev/null; then
+        echo -e "${YELLOW}Xvfb already running on $XVFB_DISP (PID: $(cat "$XVFB_PID_FILE")).${NC}"
+    else
+        Xvfb "$XVFB_DISP" -screen 0 1280x720x24 -ac -nolisten tcp +extension GLX >/dev/null 2>&1 &
+        echo "$!" > "$XVFB_PID_FILE"
+        XVFB_STARTED=1
+        echo -e "${GREEN}Xvfb started on display $XVFB_DISP (PID: $!).${NC}"
+        sleep 1
+    fi
+    export DISPLAY="$XVFB_DISP"
+    echo -e "${YELLOW}Using virtual display: DISPLAY=$DISPLAY${NC}"
+else
+    echo -e "${YELLOW}Xvfb not found — using existing DISPLAY=$DISPLAY (may be unstable).${NC}"
+    echo -e "${YELLOW}Install Xvfb: sudo apt install xvfb${NC}"
+fi
+
+# ── Watchdog: CloudXR runtime has an ~40s idle timeout on the OpenXR XR
+# session when no client connects.  When LÖVR exits, port 48010 closes and
+# the iPad gets 0x800B1004 (connection refused).  This loop automatically
+# restarts LÖVR so the signaling port is always listening.
+STOP_REQUESTED=0
+RESTART_COUNT=0
+
+_watchdog_stop() {
+    STOP_REQUESTED=1
+    echo ""
+    echo -e "${YELLOW}$(date +%T): [watchdog] Shutdown requested — stopping server.${NC}"
+}
+trap _watchdog_stop INT TERM
+trap '' PIPE          # Ignore SIGPIPE so the watchdog survives lovr crashes
+
+set +eo pipefail   # From here on, non-zero exits must not kill the script
+
+while [ "$STOP_REQUESTED" = "0" ]; do
+    # Remove any stale runtime lock left by a previous (un-clean) exit.
+    if [ -f "$RUNTIME_STARTED_FILE" ]; then
+        rm -f "$RUNTIME_STARTED_FILE" 2>/dev/null || true
+    fi
+
+    if [ "$RESTART_COUNT" -gt 0 ]; then
+        echo -e "${YELLOW}$(date +%T): [watchdog] Restart #${RESTART_COUNT} — relaunching LOVR...${NC}"
+    fi
+
+    "./$(basename "$LOVR_BIN")" "$EXAMPLE_REL_PATH" $DEVICE_PROFILE 2>&1 | tee -a "$LOVR_LOG_FILE"
+    LOVR_EXIT=${PIPESTATUS[0]}
+
+    [ "$STOP_REQUESTED" = "1" ] && break
+
+    RESTART_COUNT=$((RESTART_COUNT + 1))
+    echo -e "${YELLOW}$(date +%T): [watchdog] LOVR exited (code=$LOVR_EXIT). Restarting in 3 s...${NC}"
+    sleep 3
+    [ "$STOP_REQUESTED" = "1" ] && break
+done
 
 echo ""
-echo -e "${GREEN}✓ LOVR exited${NC}"
+echo -e "${GREEN}✓ Server stopped (total restarts: $RESTART_COUNT)${NC}"
+
+# Clean up Xvfb if we started it.
+if [ "$XVFB_STARTED" = "1" ] && [ -f "$XVFB_PID_FILE" ]; then
+    kill "$(cat "$XVFB_PID_FILE")" 2>/dev/null || true
+    rm -f "$XVFB_PID_FILE"
+    echo -e "${YELLOW}Xvfb stopped.${NC}"
+fi
 

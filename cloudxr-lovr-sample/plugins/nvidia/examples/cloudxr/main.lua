@@ -37,20 +37,19 @@ local function initGraphicsForHeadsetlessMode()
     end
 
     lovr.graphics = graphics
+    -- Initialize Vulkan graphics in off-screen / headless mode.
+    -- We intentionally do NOT open an X11 window here: the CloudXR runtime
+    -- captures Vulkan frames directly for streaming, so an X11 connection
+    -- is unnecessary and would cause LÖVR to crash if the X display dies.
     pcall(function()
         lovr.graphics.initialize()
     end)
 
+    -- Load lovr.system for keyboard/event handling, but skip openWindow so
+    -- we stay X11-free in headset-independent (server-only) mode.
     local systemSuccess, system = pcall(require, "lovr.system")
     if systemSuccess then
         lovr.system = system
-        local registry = debug.getregistry()
-        local conf = registry and registry._lovrconf
-        if conf and conf.window then
-            pcall(function()
-                lovr.system.openWindow(conf.window)
-            end)
-        end
     end
 
     return true
