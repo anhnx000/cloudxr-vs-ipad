@@ -15,14 +15,19 @@ local Renderer = require('renderer')               -- Handles rendering of VR co
 local AudioManager = require('audio_manager')      -- Manages audio playback triggered by hand gestures
 local CameraHook = require('camera_hook')          -- Prototype bridge for camera metadata plumbing
 local OPAQUE_RETRY_INTERVAL_SEC = 2.0
+local RUNTIME_RETRY_INTERVAL_SEC = 2.0
 local REQUIRE_HEADSET = os.getenv("CXR_REQUIRE_HEADSET") == "1"
 
+local runtimeInitialized = false
+local runtimeUsingSystem = false
+local runtimeInitArgs = nil
 local headsetInitialized = false
 local opaqueChannelInitialized = false
 local audioInitAttempted = false
 local cameraHookInitialized = false
 local appReadyLogged = false
 local nextOpaqueRetryAt = 0
+local nextRuntimeRetryAt = 0
 
 local function initGraphicsForHeadsetlessMode()
     local graphicsSuccess, graphics = pcall(require, "lovr.graphics")
@@ -49,6 +54,31 @@ local function initGraphicsForHeadsetlessMode()
     end
 
     return true
+end
+
+local function ensureRuntimeInitialized(args, isRetry)
+    if runtimeUsingSystem then
+        runtimeInitialized = true
+        return true
+    end
+
+    if CloudXRManager.initRuntime(args) then
+        runtimeInitialized = true
+        if isRetry then
+            print("CloudXR Runtime initialized successfully (retry).")
+        else
+            print("CloudXR Runtime initialized successfully")
+        end
+        return true
+    end
+
+    runtimeInitialized = false
+    if isRetry then
+        print("CloudXR Runtime still unavailable; retrying...")
+    else
+        print("Failed to initialize CloudXR Runtime")
+    end
+    return false
 end
 
 -- Parse command line arguments to check for special flags
@@ -85,15 +115,15 @@ function lovr.load(args)
         return
     end
     
-    -- Initialize CloudXR runtime service (unless using system runtime)
-    -- This must happen BEFORE OpenXR initialization
-    if not parsedArgs.use_system_runtime then       
-        if CloudXRManager.initRuntime(parsedArgs) then
-            print("CloudXR Runtime initialized successfully")
-        else
-            print("Failed to initialize CloudXR Runtime")
-        end
+    runtimeInitArgs = parsedArgs
+    runtimeUsingSystem = parsedArgs.use_system_runtime == true
+
+    -- Initialize CloudXR runtime service (unless using system runtime).
+    -- This must happen BEFORE OpenXR initialization.
+    if not runtimeUsingSystem then
+        ensureRuntimeInitialized(parsedArgs, false)
     else
+        runtimeInitialized = true
         print("Skipping CloudXR Runtime initialization (--use_system_runtime flag detected)")
     end
     
@@ -113,7 +143,7 @@ function lovr.load(args)
     -- Opaque channel requires a valid OpenXR instance/headset path.
     -- In iPad headset-independent mode we intentionally skip it and rely on
     -- the fallback HTTP record control API.
-    if REQUIRE_HEADSET and CloudXRManager.initOpaqueDataChannel() then
+    if REQUIRE_HEADSET and runtimeInitialized and CloudXRManager.initOpaqueDataChannel() then
         opaqueChannelInitialized = true
     elseif REQUIRE_HEADSET then
         print("Opaque Data Channel not ready yet; will retry initialization.")
@@ -134,7 +164,7 @@ function lovr.load(args)
         end
     end
 
-    if opaqueChannelInitialized or not REQUIRE_HEADSET then
+    if runtimeInitialized and (opaqueChannelInitialized or not REQUIRE_HEADSET) then
         appReadyLogged = true
         print("Application initialized successfully")
     end
@@ -164,6 +194,11 @@ end
 -- LÖVR draw function - called every frame to render the VR scene
 -- This is where we draw all the VR content that gets streamed to the headset
 function lovr.draw(pass)
+    if not runtimeInitialized then
+        pass:text("CloudXR runtime is not ready (retrying...)", 0, 1.5, -2.5, .3)
+        return
+    end
+
     local lastReceivedData = nil
     local cameraStatusText = nil
     
@@ -225,6 +260,11 @@ function lovr.update(dt)
         CloudXRManager.processLocalRecordControl()
     end
 
+    if (not runtimeInitialized) and (not runtimeUsingSystem) and runtimeInitArgs and now >= nextRuntimeRetryAt then
+        nextRuntimeRetryAt = now + RUNTIME_RETRY_INTERVAL_SEC
+        ensureRuntimeInitialized(runtimeInitArgs, true)
+    end
+
     if REQUIRE_HEADSET and not HeadsetManager.isActive() and not headsetInitialized then
         if now >= nextOpaqueRetryAt then
             nextOpaqueRetryAt = now + OPAQUE_RETRY_INTERVAL_SEC
@@ -237,7 +277,7 @@ function lovr.update(dt)
         end
     end
     
-    if REQUIRE_HEADSET and not opaqueChannelInitialized and now >= nextOpaqueRetryAt then
+    if REQUIRE_HEADSET and runtimeInitialized and not opaqueChannelInitialized and now >= nextOpaqueRetryAt then
         nextOpaqueRetryAt = now + OPAQUE_RETRY_INTERVAL_SEC
         if CloudXRManager.initOpaqueDataChannel() then
             opaqueChannelInitialized = true
@@ -270,7 +310,7 @@ function lovr.update(dt)
         AudioManager.update()
     end
 
-    if (opaqueChannelInitialized or not REQUIRE_HEADSET) and not appReadyLogged then
+    if runtimeInitialized and (opaqueChannelInitialized or not REQUIRE_HEADSET) and not appReadyLogged then
         appReadyLogged = true
         print("Application initialized successfully")
     end

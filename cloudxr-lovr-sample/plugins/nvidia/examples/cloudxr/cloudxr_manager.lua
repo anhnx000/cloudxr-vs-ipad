@@ -37,13 +37,14 @@ local function shellEscape(value)
     return value:gsub("([\\ \t\r\n\"'|;:&<>%$%(%)%[%]%{%}])", "\\%1")
 end
 
-local function writeRecordStatus(ok, status, source, output, message)
+local function writeRecordStatus(ok, status, source, output, message, requestId)
     local f = io.open(localRecordStatusPath, "w")
     if not f then return end
     f:write("ok=" .. (ok and "1" or "0") .. "\n")
     f:write("status=" .. tostring(status or "unknown") .. "\n")
     f:write("source=" .. tostring(source or "unknown") .. "\n")
     f:write("output=" .. tostring(output or "") .. "\n")
+    f:write("req=" .. tostring(requestId or "") .. "\n")
     f:write("message=" .. tostring(message or ""):gsub("[\r\n]", " ") .. "\n")
     f:write("ts=" .. tostring(os.time()) .. "\n")
     f:close()
@@ -58,16 +59,16 @@ local function sendRecordingError(reason)
     nv_cxr.sendOpaqueDataChannel(payload)
 end
 
-local function processRecordStart(source, output)
+local function processRecordStart(source, output, requestId)
     local active = recorderAvailable and Recorder.isActive() or false
     if active then
-        writeRecordStatus(true, "recording", source, Recorder.outputFile or output, "already recording")
+        writeRecordStatus(true, "recording", source, Recorder.outputFile or output, "already recording", requestId)
         return "status:already_recording", true, Recorder.outputFile or output
     end
 
     if not recorderAvailable then
         local msg = "recorder module unavailable"
-        writeRecordStatus(false, "error", source, output, msg)
+        writeRecordStatus(false, "error", source, output, msg, requestId)
         return "status:recording_error:" .. msg, false, output
     end
 
@@ -82,30 +83,30 @@ local function processRecordStart(source, output)
     local ok, result = Recorder.start(target)
     if ok then
         print("Recording started (LOVR frame capture) → " .. tostring(result))
-        writeRecordStatus(true, "recording", source, result, "recording started")
+        writeRecordStatus(true, "recording", source, result, "recording started", requestId)
         return "status:recording_started", true, result
     else
         print("Recorder.start failed: " .. tostring(result))
-        writeRecordStatus(false, "error", source, target, tostring(result))
+        writeRecordStatus(false, "error", source, target, tostring(result), requestId)
         return "status:recording_error:" .. tostring(result), false, target
     end
 end
 
-local function processRecordStop(source)
+local function processRecordStop(source, requestId)
     local active = recorderAvailable and Recorder.isActive() or false
     if not active then
-        writeRecordStatus(true, "idle", source, "", "not recording")
+        writeRecordStatus(true, "idle", source, "", "not recording", requestId)
         return "status:not_recording", true, ""
     end
 
     local ok, result = Recorder.stop()
     if ok then
         print("Recording stopped → " .. tostring(result))
-        writeRecordStatus(true, "idle", source, tostring(result), "recording stopped")
+        writeRecordStatus(true, "idle", source, tostring(result), "recording stopped", requestId)
         return "status:recording_stopped", true, tostring(result)
     else
         print("Recorder.stop failed: " .. tostring(result))
-        writeRecordStatus(false, "error", source, "", tostring(result))
+        writeRecordStatus(false, "error", source, "", tostring(result), requestId)
         return "status:recording_error:" .. tostring(result), false, ""
     end
 end
@@ -121,6 +122,7 @@ local function handleLocalRecordCommand()
     local command = line
     local source = "unknown"
     local output = ""
+    local requestId = ""
     for part in string.gmatch(line, "([^|]+)") do
         if part == "start" or part == "stop" then
             command = part
@@ -128,13 +130,15 @@ local function handleLocalRecordCommand()
             source = part:gsub("^source=", "")
         elseif part:match("^output=") then
             output = part:gsub("^output=", "")
+        elseif part:match("^req=") then
+            requestId = part:gsub("^req=", "")
         end
     end
 
     if command == "start" then
-        processRecordStart(source, output)
+        processRecordStart(source, output, requestId)
     elseif command == "stop" then
-        processRecordStop(source)
+        processRecordStop(source, requestId)
     end
 end
 

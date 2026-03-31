@@ -82,39 +82,47 @@ Khuyến nghị chạy mặc định (không set `CXR_DEVICE_PROFILE`) khi kết
 3. Kết nối lại với IP local.
 4. Thu log server tại thời điểm bấm `Connect` để đối chiếu profile/runtime.
 
-## 8) Lỗi thực tế đã gặp: `0x80b1004`
+## 8) Lỗi thực tế đã gặp: `0x80b1004` (Connection attempt unsuccessful)
 
-Triệu chứng trên iPad:
+Triệu chứng:
 
-- Popup: `Connection attempt unsuccessful`
-- Error description: `The operation couldn't be completed. 0x80b1004`
+- iPad báo `Connection attempt unsuccessful`.
+- Error description: `The operation couldn't be completed. 0x80b1004`.
 
-Phân tích:
+Root cause thường gặp:
 
-- Đây là nhánh `failedConnectionAttempt` trong `CloudXRViewer`.
-- Đã đối chiếu với test mạng thực tế:
-  - `ping 10.24.240.130` -> OK
-  - `nc -vzu -w 3 10.24.240.130 48010` -> UDP OK
-  - `nc -vz -w 3 10.24.240.130 48010` -> `Connection refused` (TCP fail)
+- Server không mở TCP listener `48010` dù app đã chạy.
+- CloudXR runtime fail ở lần init đầu và trước đây không tự retry.
 
-Kết luận:
+Fix đã áp dụng trong code:
 
-- Lỗi không nằm ở bước build app iPad.
-- Root cause là server chưa mở TCP listener ở cổng `48010` (hoặc process CloudXR/lovr chưa chạy đúng), nên client chuyển từ `Connecting` sang `Disconnected` ngay.
+- `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/main.lua`
+  - Thêm retry tự động cho `CloudXRManager.initRuntime(...)` mỗi ~2 giây.
+  - Chỉ báo app `initialized successfully` khi runtime thực sự sẵn sàng.
+  - Khi runtime chưa sẵn sàng, hiển thị trạng thái `retrying...` thay vì im lặng.
+  - Chỉ init opaque channel sau khi runtime đã lên.
 
-Lệnh xác minh nhanh trên server Linux:
+## 9) Checklist nhanh trước khi bấm Connect trên iPad
+
+Trên Linux server:
 
 ```bash
-ss -lntup | grep 48010
-ps -ef | grep -E "lovr|cloudxr" | grep -v grep
+cd cloudxr-lovr-sample
+rm -f /run/user/1000/runtime_started
+./run.sh
+ss -lntup | grep -E '48010|49080'
 ```
 
-Nếu chưa listen TCP `48010`:
+Nếu chưa thấy `:48010`:
 
 ```bash
-cd ~/work/cloudxr-vs-ipad/cloudxr-lovr-sample
 pkill -f lovr || true
 sleep 1
 ./run.sh
 ```
+Để đọc log nhanh:
 
+```bash
+cd cloudxr-lovr-sample
+./tools/check_server_logs.sh
+```

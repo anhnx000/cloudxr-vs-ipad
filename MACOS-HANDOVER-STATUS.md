@@ -1,72 +1,97 @@
 # CloudXR Handover Status (Linux -> macOS)
 
-Muc tieu: file nay giup may macOS clone repo ve la nam duoc ngay trang thai hien tai, cac thay doi vua push, cach build lai client iOS, va cach connect den Linux server.
+Muc tieu: tai lieu nay giup may macOS clone repo ve la hieu ngay:
+- Kien truc hien tai cua luong iPad -> Linux server.
+- Cac commit chinh da push tren `main`.
+- Cach build client iOS va test ket noi.
+- Cach doc logs de phan tich loi khi test that tren iPad.
 
-## 1) Commit da push gan nhat
+## 1) Snapshot commit gan day tren main
 
-- Branch: `main`
-- Commit: `e9efda2`
-- Message: `fix: improve record feedback and add Lua recording tests`
+Recent commits (new -> old):
 
-Thay doi chinh:
+- `fba130f` - feat: add iPad camera ingest pipeline and CloudXR output recording
+- `6c64f03` - fix: separate iPad/Ubuntu recordings and harden record stop flow
+- `fcedde8` - feat: add iPad fallback record control without headset dependency
+- `da70f8b` - docs: add macOS handover status for rebuild and reconnect
+- `e9efda2` - fix: improve record feedback and add Lua recording tests
 
-- `cloudxr-apple-generic-viewer/CloudXRViewer/Common/ServerActionsView.swift`
-  - Nut Record luon tra feedback ngay khi nhan.
-  - Hien thi loi ro rang khi channel chua san sang / khong gui duoc lenh.
-  - Parse loi tu server theo dang `status:recording_error:<detail>`.
-- `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/cloudxr_manager.lua`
-  - Server tra loi recording co detail (`status:recording_error:<detail>`).
-- Them test Lua:
-  - `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/tests/recorder_gpu_capture_test.lua`
-  - `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/tests/cloudxr_manager_record_feedback_test.lua`
-  - `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/tests/run_lua_tests.sh`
+Neu clone tren macOS, hay xac nhan da co commit `fba130f` tro len.
 
-## 2) Tinh trang server Linux hien tai
+## 2) Kien truc hien tai (quan trong)
 
-- Da khoi dong lai CloudXR LOVR server tu:
-  - `cloudxr-lovr-sample/run.sh`
-- Server dang listen:
-  - TCP `0.0.0.0:48010`
-- LAN IP da dung de test:
-  - `10.24.240.130`
+### 2.1 CloudXR output recording (muc tieu chinh)
 
-Luu y: IP co the thay doi theo moi lan vao mang. Luon kiem tra lai IP tren Linux bang:
+- Record output sau khi qua render pipeline cua LOVR/CloudXR (khong phai quay truc tiep camera iPad).
+- Path chinh:
+  - `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/main.lua`
+  - `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/cloudxr_manager.lua`
+  - `cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/recorder.lua`
+- Recorder capture frame tu off-screen pass, encode MP4 bang GStreamer.
+
+### 2.2 Fallback control API cho iPad
+
+- API chay tren Linux: `cloudxr-lovr-sample/tools/record_control_api.py`
+- Port: `49080`
+- Endpoints:
+  - `GET /health`
+  - `GET /record/status`
+  - `POST /record/start`
+  - `POST /record/stop`
+  - `GET /camera/status`
+  - `POST /camera/start`
+  - `POST /camera/frame`
+  - `POST /camera/stop`
+- Control record qua file IPC:
+  - `/tmp/cloudxr_lovr_record_cmd.txt`
+  - `/tmp/cloudxr_lovr_record_status.txt`
+
+### 2.3 Headset-independent mode
+
+- Mac dinh khong bat buoc headset (`CXR_REQUIRE_HEADSET != 1`).
+- Muc tieu: dam bao iPad flow van chay du khong co OpenXR headset vat ly.
+
+## 3) Logging va phan tich server (da nang cap)
+
+### 3.1 Thu muc logs theo session
+
+`run.sh` tao log theo tung session:
+
+- `cloudxr-lovr-sample/logs/server/<YYYYmmdd_HHMMSS>/run.log`
+- `cloudxr-lovr-sample/logs/server/<YYYYmmdd_HHMMSS>/lovr.log`
+- `cloudxr-lovr-sample/logs/server/<YYYYmmdd_HHMMSS>/record_api.log`
+- Shortcut session moi nhat:
+  - `cloudxr-lovr-sample/logs/server/latest`
+
+### 3.2 Script check nhanh logs
+
+Da co script:
+
+- `cloudxr-lovr-sample/tools/check_server_logs.sh`
+
+Dung:
 
 ```bash
-hostname -I
-ip route get 1.1.1.1
-ss -lntup | grep 48010
+cd cloudxr-lovr-sample
+./tools/check_server_logs.sh
 ```
 
-## 3) Cac test record da verify
+Script se in:
+- tail `lovr.log`
+- tail `record_api.log`
+- noi dung `/tmp/cloudxr_lovr_record_status.txt`
 
-### 3.1 Lua tests (logic)
+### 3.3 Pattern logs quan trong de phan tich
 
-Da chay pass:
+Trong `record_api.log`, uu tien tim:
 
-```bash
-bash cloudxr-lovr-sample/plugins/nvidia/examples/cloudxr/tests/run_lua_tests.sh
-```
+- `record.start request_id=...`
+- `record.start ok request_id=...`
+- `record.stop request_id=...`
+- `record.stop ok request_id=...`
+- `record.start failed ...` / `record.stop failed ...`
 
-Ket qua:
-
-- `PASS recorder_gpu_capture_test.lua`
-- `PASS cloudxr_manager_record_feedback_test.lua`
-- `All Lua tests passed.`
-
-### 3.2 Record that webcam thuc te
-
-Da test luu video thuc te bang GStreamer:
-
-```bash
-./ubuntu-webcam-example.sh record "/home/anhnx10/work/cloudxr-vs-ipad/recordings/webcam-18s-test.webm" 18s
-```
-
-File ket qua:
-
-- `/home/anhnx10/work/cloudxr-vs-ipad/recordings/webcam-18s-test.webm`
-- Duration thuc te: ~`17.83s`
-- Resolution: `640x480`, `30 FPS`, codec `VP8`, container `WebM`
+Neu can truy vet mot case, gom log theo `request_id`.
 
 ## 4) Huong dan nhanh tren macOS sau khi clone
 
@@ -77,14 +102,12 @@ git clone git@github.com:anhnx000/cloudxr-vs-ipad.git
 cd cloudxr-vs-ipad
 git checkout main
 git pull --ff-only
-git log --oneline -n 5
+git log --oneline -n 8
 ```
-
-Xac nhan co commit `e9efda2`.
 
 ### 4.2 Build client iOS tren macOS
 
-Doc chi tiet tai:
+Tai lieu:
 
 - `HUONG-DAN-BUILD-IPAD-CLOUDXR.md`
 - `cloudxr-apple-generic-viewer/README.md`
@@ -101,37 +124,47 @@ xcodebuild \
   clean build
 ```
 
-### 4.3 Connect tu iPad/visionOS app
+### 4.3 Connect tu iPad app
 
-- Trong app, chon `Manual IP address`.
-- Nhap IP Linux server (vi du hien tai: `10.24.240.130`).
-- Connect den CloudXR server (port mac dinh: `48010`).
+- Trong app: chon `Manual IP address`.
+- Nhap IP Linux server.
+- Connect CloudXR port `48010`.
+- API fallback record dung port `49080` (HTTP).
 
-Neu khong connect duoc:
+## 5) Runbook Linux server cho nguoi van hanh
 
-1. Kiem tra Linux server dang chay (`run.sh`) va port `48010` dang listen.
-2. Ping/port check tu mac:
-
-```bash
-ping -c 4 <SERVER_IP>
-nc -vz <SERVER_IP> 48010
-nc -vzu <SERVER_IP> 48010
-```
-
-3. Dam bao iPad va Linux cung subnet va khong bi client isolation.
-
-## 5) Ghi chu van hanh
-
-- Neu `runtime_started` bi ket sau lan crash:
-
-```bash
-rm -f /run/user/1000/runtime_started
-```
-
-- Sau do chay lai:
+### 5.1 Start server
 
 ```bash
 cd cloudxr-lovr-sample
+rm -f /run/user/1000/runtime_started
 ./run.sh
 ```
+
+### 5.2 Check nhanh runtime/network
+
+```bash
+hostname -I
+ip route get 1.1.1.1
+ss -lntup | grep -E '48010|49080'
+curl -sS http://127.0.0.1:49080/health
+```
+
+### 5.3 Khi test iPad xong, thu thap thong tin de phan tich
+
+```bash
+cd cloudxr-lovr-sample
+./tools/check_server_logs.sh
+```
+
+Va gui kem:
+- thu muc `cloudxr-lovr-sample/logs/server/latest/`
+- file `/tmp/cloudxr_lovr_record_status.txt`
+- timestamp thao tac tren iPad (nhan record/start/stop, thong bao loi tren UI)
+
+## 6) Ghi chu cho nguoi tiep theo
+
+- Luong record uu tien output sau CloudXR render (khong phai stream camera iPad raw).
+- Camera ingest endpoints van ton tai de test pipeline du phong.
+- Neu co loi recording pending hoac mismatch status, check `record_api.log` theo `request_id` truoc, sau do doi chieu voi `lovr.log`.
 
